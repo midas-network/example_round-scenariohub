@@ -89,7 +89,7 @@ for (i in 2:length(loc_list)) {
 }
 
 # write output
-filename <- "../model-output/team1-modela/2023-02-01-team1-modela.gz.parquet"
+filename <- "../model-output/team1_modela/2023-02-01-team1_modela.gz.parquet"
 arrow::write_parquet(df_tot, filename, compression = "gzip", 
                      compression_level = 9)
 

@@ -1,0 +1,17 @@
+{
+    "name": "Megaround Scenario Hub",
+    "maintainer": "Scenario Modeling Hub Coordination Team",
+    "contact": {
+        "name": "Joe Bloggs",
+        "email": "j.bloggs@email.com"
+    },
+    "repository_url": "https://github.com/LucieContamin/megaround-scenariohub",
+    "hub_models": [
+        {
+            "team_abbr": "megaround_hub",
+            "model_abbr": "ensemble",
+            "model_type": "ensemble"
+        }
+    ],
+    "timezone": "Eastern US"
+}
