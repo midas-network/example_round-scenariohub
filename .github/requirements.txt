@@ -1,0 +1,25 @@
+# Packages required for the validation (update cache on the 2023-02-14)
+https://github.com/midas-network/SMHvalidation/archive/refs/heads/new_input_format.zip
+arrow
+covidcast
+cowplot
+data.table
+dplyr
+ggplot2
+ggpubr
+gh
+glue
+grDevices
+grid
+gridExtra
+gtable
+jsonlite
+lubridate
+purrr
+readr
+remotes
+scales
+stringr
+tibble
+tidyr
+tidyselect
