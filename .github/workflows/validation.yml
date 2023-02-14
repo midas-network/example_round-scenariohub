@@ -1,11 +1,11 @@
-name: Validate and Visualize Submission
+name: Validate Submission(s)
 on:
   pull_request_target:
     branches:
       - master
 
 jobs:
-    validates-viz-files:
+    validates-files:
         runs-on: ubuntu-latest
 
         steps:
