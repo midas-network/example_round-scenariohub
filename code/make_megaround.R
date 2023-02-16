@@ -16,7 +16,7 @@ df <- data.frame(
 
 # for all horizon
 df_tot <- df
-for (i in 2:104) { #104 #156
+for (i in 2:260) {
   df2 <- data.frame(
     origin_date = "2023-02-01",
     scenario_id = "A-2023-01-25",
@@ -88,9 +88,28 @@ for (i in 2:length(loc_list)) {
   df_tot <- rbind(df_tot, df2)
 }
 
+df_tot <- dplyr::mutate(df_tot, value = as.numeric(value))
+
 # write output
-filename <- "../model-output/team1_modela/2023-02-01-team1_modela.gz.parquet"
-arrow::write_parquet(df_tot, filename, compression = "gzip", 
+filename <- "data-processed/team1_modela/2023-02-01-team1_modela.gz.parquet"
+arrow::write_parquet(df_tot, filename, compression = "gzip",
+                     compression_level = 9)
+
+
+filename_case <-
+  "data-processed/team2_modelb/2023-02-01-team2_modelb_inccase.gz.parquet"
+filename_death <-
+  "data-processed/team2_modelb/2023-02-01-team2_modelb_incdeath.gz.parquet"
+filename_hosp <-
+  "data-processed/team2_modelb/2023-02-01-team2_modelb_inchosp.gz.parquet"
+arrow::write_parquet(dplyr::filter(df_tot, target == "inc case"),
+                     filename_case, compression = "gzip",
+                     compression_level = 9)
+arrow::write_parquet(dplyr::filter(df_tot, target == "inc death"),
+                     filename_death, compression = "gzip",
+                     compression_level = 9)
+arrow::write_parquet(dplyr::filter(df_tot, target == "inc hosp"),
+                     filename_hosp, compression = "gzip",
                      compression_level = 9)
 
 ##### TESTS -----
