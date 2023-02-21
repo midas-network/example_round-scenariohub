@@ -11,12 +11,12 @@ df <- data.frame(
   horizon = 1,
   type = "sample",
   type_id = c(1:100),
-  value = sample(seq(11900.00, 12500.00, by = 0.001), 100)
+  value = sample(seq(5000.00, 10500.00, by = 0.001), 100)
 )
 
 # for all horizon
 df_tot <- df
-for (i in 2:260) {
+for (i in 2:260) { #104
   df2 <- data.frame(
     origin_date = "2023-02-01",
     scenario_id = "A-2023-01-25",
@@ -32,7 +32,7 @@ for (i in 2:260) {
 # for all scenario
 dfscen <- df_tot
 scen_list <- c("A-2023-01-25", "B-2023-01-25", "C-2023-01-25", "D-2023-01-25",
-               "E-2023-01-25", "F-2023-01-25", "G-2023-01-25", "H-2023-01-25"
+               "E-2023-01-25", "F-2023-01-25"#, "G-2023-01-25", "H-2023-01-25"
 )
 for (i in 2:length(scen_list)) {
   df2 <- data.frame(
