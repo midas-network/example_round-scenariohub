@@ -4,8 +4,8 @@
 
 # data frame with one group
 df <- data.frame(
-  origin_date = "2023-02-01",
-  scenario_id = "A-2023-01-25",
+  origin_date = "2023-04-16",
+  scenario_id = "A-2023-04-15",
   location = "US",
   target = "inc death",
   horizon = 1,
@@ -16,10 +16,10 @@ df <- data.frame(
 
 # for all horizon
 df_tot <- df
-for (i in 2:260) { #104
+for (i in 2:104) { #250
   df2 <- data.frame(
-    origin_date = "2023-02-01",
-    scenario_id = "A-2023-01-25",
+    origin_date = "2023-04-16",
+    scenario_id = "A-2023-04-15",
     location = "US",
     target = "inc death",
     horizon = i,
@@ -31,12 +31,11 @@ for (i in 2:260) { #104
 }
 # for all scenario
 dfscen <- df_tot
-scen_list <- c("A-2023-01-25", "B-2023-01-25", "C-2023-01-25", "D-2023-01-25",
-               "E-2023-01-25", "F-2023-01-25"#, "G-2023-01-25", "H-2023-01-25"
-)
+scen_list <- c("A-2023-04-15", "B-2023-04-15", "C-2023-04-15", "D-2023-04-15",
+               "E-2023-04-15", "F-2023-04-15")
 for (i in 2:length(scen_list)) {
   df2 <- data.frame(
-    origin_date = "2023-02-01",
+    origin_date = "2023-04-16",
     scenario_id = scen_list[[i]],
     location = "US",
     target = "inc death",
@@ -50,10 +49,10 @@ for (i in 2:length(scen_list)) {
 
 # for all target
 dftarget <- df_tot
-target_list <- c("inc death", "inc hosp", "inc case")
+target_list <- c("inc death", "inc hosp")
 for (i in 2:length(target_list)) {
   df2 <- data.frame(
-    origin_date = "2023-02-01",
+    origin_date = "2023-04-16",
     scenario_id = dftarget$scenario_id,
     location = "US",
     target = target_list[[i]],
@@ -72,11 +71,10 @@ loc_list <- c("US", "01", "02", "04", "05", "06", "08", "09", "10", "11", "12",
               "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35",
               "36", "37", "38", "39", "40", "41", "42", "44", "45", "46", "47",
               "48", "49", "50", "51", "53", "54", "55", "56", "60", "66", "69",
-              "72", "74", "78"
-)
+              "72", "74", "78")
 for (i in 2:length(loc_list)) {
   df2 <- data.frame(
-    origin_date = "2023-02-01",
+    origin_date = "2023-04-16",
     scenario_id = dfloc$scenario_id,
     location = loc_list[[i]],
     target = dfloc$target,
@@ -91,20 +89,15 @@ for (i in 2:length(loc_list)) {
 df_tot <- dplyr::mutate(df_tot, value = as.numeric(value))
 
 # write output
-filename <- "data-processed/team1_modela/2023-02-01-team1_modela.gz.parquet"
+filename <- "data-processed/team1_modela/2023-04-16-team1_modela.gz.parquet"
 arrow::write_parquet(df_tot, filename, compression = "gzip",
                      compression_level = 9)
 
 
-filename_case <-
-  "data-processed/team2_modelb/2023-02-01-team2_modelb_inccase.gz.parquet"
 filename_death <-
-  "data-processed/team2_modelb/2023-02-01-team2_modelb_incdeath.gz.parquet"
+  "data-processed/team2_modelb/2023-04-16-team2_modelb_incdeath.gz.parquet"
 filename_hosp <-
-  "data-processed/team2_modelb/2023-02-01-team2_modelb_inchosp.gz.parquet"
-arrow::write_parquet(dplyr::filter(df_tot, target == "inc case"),
-                     filename_case, compression = "gzip",
-                     compression_level = 9)
+  "data-processed/team2_modelb/2023-04-16-team2_modelb_inchosp.gz.parquet"
 arrow::write_parquet(dplyr::filter(df_tot, target == "inc death"),
                      filename_death, compression = "gzip",
                      compression_level = 9)
