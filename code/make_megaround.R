@@ -5,21 +5,21 @@
 # data frame with one group
 df <- data.frame(
   origin_date = "2023-04-16",
-  scenario_id = "A-2023-04-15",
+  scenario_id = "A-2023-04-16",
   location = "US",
   target = "inc death",
   horizon = 1,
   type = "sample",
   type_id = c(1:100),
-  value = sample(seq(5000.00, 10500.00, by = 0.001), 100)
+  value = sample(seq(7500.00, 12500.00, by = 0.001), 100)
 )
 
 # for all horizon
 df_tot <- df
-for (i in 2:104) { #250
+for (i in 2:250) { #250
   df2 <- data.frame(
     origin_date = "2023-04-16",
-    scenario_id = "A-2023-04-15",
+    scenario_id = "A-2023-04-16",
     location = "US",
     target = "inc death",
     horizon = i,
@@ -31,8 +31,8 @@ for (i in 2:104) { #250
 }
 # for all scenario
 dfscen <- df_tot
-scen_list <- c("A-2023-04-15", "B-2023-04-15", "C-2023-04-15", "D-2023-04-15",
-               "E-2023-04-15", "F-2023-04-15")
+scen_list <- c("A-2023-04-16", "B-2023-04-16", "C-2023-04-16", "D-2023-04-16",
+               "E-2023-04-16", "F-2023-04-16")
 for (i in 2:length(scen_list)) {
   df2 <- data.frame(
     origin_date = "2023-04-16",
