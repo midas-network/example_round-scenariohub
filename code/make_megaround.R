@@ -1,111 +1,124 @@
 #### DUMMY SCRIPT
 
-## Sample file format ----
+# Library
+library(dplyr)
 
-# data frame with one group
-df <- data.frame(
-  origin_date = "2023-04-16",
-  scenario_id = "A-2023-04-16",
-  location = "US",
-  target = "inc death",
-  horizon = 1,
-  type = "sample",
-  type_id = c(1:100),
-  value = sample(seq(7500.00, 12500.00, by = 0.001), 100)
-)
-
-# for all horizon
-df_tot <- df
-for (i in 2:250) { #250
-  df2 <- data.frame(
-    origin_date = "2023-04-16",
-    scenario_id = "A-2023-04-16",
-    location = "US",
-    target = "inc death",
-    horizon = i,
-    type = "sample",
-    type_id = c(1:100),
-    value = df$value * as.numeric(paste0("1.", i))
-  )
-  df_tot <- rbind(df_tot, df2)
-}
-# for all scenario
-dfscen <- df_tot
-scen_list <- c("A-2023-04-16", "B-2023-04-16", "C-2023-04-16", "D-2023-04-16",
-               "E-2023-04-16", "F-2023-04-16")
-for (i in 2:length(scen_list)) {
-  df2 <- data.frame(
-    origin_date = "2023-04-16",
-    scenario_id = scen_list[[i]],
-    location = "US",
-    target = "inc death",
-    horizon = dfscen$horizon,
-    type = "sample",
-    type_id = dfscen$type_id,
-    value = dfscen$value * as.numeric(paste0("1.", i))
-  )
-  df_tot <- rbind(df_tot, df2)
-}
-
-# for all target
-dftarget <- df_tot
-target_list <- c("inc death", "inc hosp")
-for (i in 2:length(target_list)) {
-  df2 <- data.frame(
-    origin_date = "2023-04-16",
-    scenario_id = dftarget$scenario_id,
-    location = "US",
-    target = target_list[[i]],
-    horizon = dftarget$horizon,
-    type = "sample",
-    type_id = dftarget$type_id,
-    value = dftarget$value * as.numeric(paste0("1.", i))
-  )
-  df_tot <- rbind(df_tot, df2)
-}
-
-# for all location
-dfloc <- df_tot
+# Prerequisite
 loc_list <- c("US", "01", "02", "04", "05", "06", "08", "09", "10", "11", "12",
               "13", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24",
               "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35",
               "36", "37", "38", "39", "40", "41", "42", "44", "45", "46", "47",
               "48", "49", "50", "51", "53", "54", "55", "56", "60", "66", "69",
               "72", "74", "78")
-for (i in 2:length(loc_list)) {
-  df2 <- data.frame(
-    origin_date = "2023-04-16",
-    scenario_id = dfloc$scenario_id,
-    location = loc_list[[i]],
-    target = dfloc$target,
-    horizon = dfloc$horizon,
-    type = "sample",
-    type_id = dfloc$type_id,
-    value = dfloc$value * as.numeric(paste0("0.", i))
-  )
-  df_tot <- rbind(df_tot, df2)
-}
+team_model <- c("team1_modela", "team2_modelb", "team3_modelc","team4_modeld",
+                "team5_modele", "team6_modelf", "team7_modelg")
 
-df_tot <- dplyr::mutate(df_tot, value = as.numeric(value))
+df_team <- lapply(team_model[3], function(tm) {
+  print(tm)
+  sam_var <- sample(seq(0.01, 0.25, by = 0.01), 1)
+  df_loc <- lapply(loc_list, function(loc) {
+    print(loc)
+    df_targ <- lapply(c("inc death", "inc hosp"), function(targ) {
+      ## Sample file format ----
+      if (targ == "inc death") {
+        df_obs <- read.csv("data-goldstandard/deaths_incidence_num.csv")
+        x <- sample(seq(10:60), 1)
+      }
+      if (targ == "inc hosp") {
+        df_obs <- read.csv("data-goldstandard/hospitalization.csv")
+        if (tm %in% c("team6_modelf", "team7_modelg")) {
+          df_obs <- arrange(df_obs, order(as.Date(time_value), decreasing = T))
+        }
+        x <- sample(seq(28:60), 1)
+      }
+      # data frame with one group
+      df <- data.frame(
+        origin_date = "2023-04-16",
+        scenario_id = "A-2023-04-16",
+        location = loc,
+        target = targ,
+        horizon = c(1:104),
+        type = "sample",
+        type_id = 1,
+        value = filter(df_obs, fips == loc)[x:(x + 103), "value"]
+      )
 
-# write output
-filename <- "data-processed/team1_modela/2023-04-16-team1_modela.gz.parquet"
-arrow::write_parquet(df_tot, filename, compression = "gzip",
-                     compression_level = 9)
+      # for all sample
+      df_tot <- df
+      for (i in 2:100) {
+        x2 <- sample(seq(x, x+13), 1)
+        val = filter(df_obs, fips == loc)[x2:(x2+103), "value"] *
+          sample(seq(1 - sam_var, 1 + sam_var, by = 0.01), 1)
+        df2 <- data.frame(
+          origin_date = "2023-04-16",
+          scenario_id = "A-2023-04-16",
+          location = loc,
+          target = targ,
+          horizon = c(1:104),
+          type = "sample",
+          type_id = i,
+          value = val
+        )
+        df_tot <- rbind(df_tot, df2)
+      }
+      # for all scenario
+      dfscen <- df_tot
+      scen_list <- c("A-2023-04-16", "B-2023-04-16", "C-2023-04-16", "D-2023-04-16",
+                     "E-2023-04-16", "F-2023-04-16")
+      for (i in 2:length(scen_list)) {
+        df2 <- data.frame(
+          origin_date = "2023-04-16",
+          scenario_id = scen_list[[i]],
+          location = loc,
+          target = targ,
+          horizon = dfscen$horizon,
+          type = "sample",
+          type_id = dfscen$type_id,
+          value = dfscen$value * as.numeric(paste0("1.", i))
+        )
+        df_tot <- rbind(df_tot, df2)
+      }
+      return(df_tot)
+    }) %>% bind_rows()
+    return(df_targ)
+  }) %>% bind_rows()
+
+  df_loc$value <- as.numeric(df_loc$value)
+  df_loc[which(df_loc$value < 0), "value"] <- 0
+  df_loc[which(is.na(df_loc$value)), "value"] <- 0
+  filename <- paste0("data-processed/", tm, "/2023-04-16-", tm, ".gz.parquet")
+  print(filename)
+  arrow::write_parquet(df_loc, filename,
+                       compression = "gzip", compression_level = 9)
+  df_loc$model_name <- tm
+  return(df_loc)
+
+}) %>% bind_rows()
 
 
-filename_death <-
-  "data-processed/team2_modelb/2023-04-16-team2_modelb_incdeath.gz.parquet"
-filename_hosp <-
-  "data-processed/team2_modelb/2023-04-16-team2_modelb_inchosp.gz.parquet"
-arrow::write_parquet(dplyr::filter(df_tot, target == "inc death"),
-                     filename_death, compression = "gzip",
-                     compression_level = 9)
-arrow::write_parquet(dplyr::filter(df_tot, target == "inc hosp"),
-                     filename_hosp, compression = "gzip",
-                     compression_level = 9)
+library(ggplot2)
+test <- dplyr::filter(df_team, location == "45", grepl("A-", scenario_id),
+                      target == "inc hosp") %>%
+  mutate(group = paste0(model_name, type_id))
+ggplot2::ggplot(data = test, aes(x = horizon, y = value, group = group,
+                        color = model_name)) +
+  geom_line()
 
-##### TESTS -----
+
+
+#
+#filename_death <-
+#  "data-processed/team2_modelb/2023-04-16-team2_modelb_incdeath.gz.parquet"
+#filename_hosp <-
+#  "data-processed/team2_modelb/2023-04-16-team2_modelb_inchosp.gz.parquet"
+#arrow::write_parquet(dplyr::filter(df_tot, target == "inc death"),
+#                     filename_death, compression = "gzip",
+#                     compression_level = 9)
+#arrow::write_parquet(dplyr::filter(df_tot, target == "inc hosp"),
+#                     filename_hosp, compression = "gzip",
+#                     compression_level = 9)
+#
+###### TESTS -----
 
 
 ## old format
