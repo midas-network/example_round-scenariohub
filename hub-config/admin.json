@@ -1,17 +1,19 @@
 {
-    "name": "Megaround Scenario Hub",
+    "schema_version":"https://raw.githubusercontent.com/Infectious-Disease-Modeling-Hubs/schemas/main/v1.0.0/admin-schema.json",
+    "name": "Example Scenario Hub",
     "maintainer": "Scenario Modeling Hub Coordination Team",
     "contact": {
         "name": "Joe Bloggs",
         "email": "j.bloggs@email.com"
     },
-    "repository_url": "https://github.com/LucieContamin/megaround-scenariohub",
+    "repository_url": "https://github.com/LucieContamin/example_round-scenariohub",
     "hub_models": [
         {
-            "team_abbr": "megaround_hub",
+            "team_abbr": "example_hub",
             "model_abbr": "ensemble",
             "model_type": "ensemble"
         }
     ],
-    "timezone": "Eastern US"
+    "timezone": "US/Eastern",
+    "file_format":["csv", "parquet"]
 }
