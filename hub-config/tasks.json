@@ -1,5 +1,5 @@
 {
-  "schema_version": "https://github.com/Infectious-Disease-Modeling-Hubs/schemas/blob/main/v0.0.1/tasks-schema.json",
+  "schema_version": "https://raw.githubusercontent.com/Infectious-Disease-Modeling-Hubs/schemas/main/v1.0.0/tasks-schema.json",
   "rounds": [
     {
       "round_id": "2023-04-16",
@@ -35,7 +35,7 @@
                 "optional": null
               },
               "value" : {
-                "type": "numeric",
+                "type": "double",
                 "minimum": 0
               }
             }
@@ -97,7 +97,7 @@
                 "optional": null
               },
               "value" : {
-                "type": "numeric",
+                "type": "double",
                 "minimum": 0
               }
             }
@@ -157,6 +157,148 @@
       "submissions_due": {
         "start": "2023-04-17",
         "end": "2023-05-17"
+      }
+    },
+    {
+      "round_id": "origin_date",
+      "round_id_from_variable": true,
+      "model_tasks": [
+        {
+          "task_ids": {
+            "origin_date": {
+              "required": ["2023-09-01"],
+              "optional": null
+            },
+             "scenario_id": {
+              "required": ["A-2023-09-01"],
+              "optional": null
+            },
+            "location": {
+              "required": null,
+              "optional": ["06", "37"]
+            },
+            "target": {
+              "required": ["inc death", "inc case"],
+              "optional": null
+            },
+            "horizon": {
+              "required": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+              "optional": null
+            },
+            "race_ethnicity":{
+              "required": ["asian", "black", "white", "latino/hispanic", "other"],
+              "optional": null
+            }
+          },
+          "output_type": {
+            "sample": {
+              "type_id": {
+                "required": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100],
+                "optional": null
+              },
+              "value" : {
+                "type": "double",
+                "minimum": 0
+              }
+            }
+          },
+          "target_metadata": [
+            {
+              "target_id": "inc death",
+              "target_name": "Incident deaths",
+              "target_units": "count",
+              "target_keys": {
+                "target": "inc death"
+              },
+              "description": "Weekly new deaths due to COVID-19 as reported by state and local departments of public health and aggregated in the JHU data collection system.",
+              "target_type": "discrete",
+              "is_step_ahead": true,
+              "time_unit": "week"
+            },
+            {
+              "target_id": "inc case",
+              "target_name": "Incident cases",
+              "target_units": "count",
+              "target_keys": {
+                "target": "inc case"
+              },
+              "description": "Weekly newly reported cases due to COVID-19 as reported by state and local departments of public health and aggregated in the JHU data collection system.",
+              "target_type": "discrete",
+              "is_step_ahead": true,
+              "time_unit": "week"
+            }
+          ]
+        },
+        {
+          "task_ids": {
+            "origin_date": {
+              "required": ["2023-09-01"],
+              "optional": null
+            },
+             "scenario_id": {
+              "required": ["B-2023-09-01"],
+              "optional": null
+            },
+            "location": {
+              "required": null,
+              "optional": ["06", "37"]
+            },
+            "target": {
+              "required": ["inc death", "inc case"],
+              "optional": null
+            },
+            "horizon": {
+              "required": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+              "optional": null
+            },
+            "race_ethnicity":{
+              "required": ["none"],
+              "optional": null
+            }
+          },
+          "output_type": {
+            "sample": {
+              "type_id": {
+                "required": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100],
+                "optional": null
+              },
+              "value" : {
+                "type": "double",
+                "minimum": 0
+              }
+            }
+          },
+          "target_metadata": [
+            {
+              "target_id": "inc death",
+              "target_name": "Incident deaths",
+              "target_units": "count",
+              "target_keys": {
+                "target": "inc death"
+              },
+              "description": "Weekly new deaths due to COVID-19 as reported by state and local departments of public health and aggregated in the JHU data collection system.",
+              "target_type": "discrete",
+              "is_step_ahead": true,
+              "time_unit": "week"
+            },
+            {
+              "target_id": "inc case",
+              "target_name": "Incident cases",
+              "target_units": "count",
+              "target_keys": {
+                "target": "inc case"
+              },
+              "description": "Weekly newly reported cases due to COVID-19 as reported by state and local departments of public health and aggregated in the JHU data collection system.",
+              "target_type": "discrete",
+              "is_step_ahead": true,
+              "time_unit": "week"
+            }
+          ]
+        }
+      ],
+      "submissions_due": {
+        "start": "2023-09-01",
+        "end": "2023-10-15"
       }
     }
   ]
