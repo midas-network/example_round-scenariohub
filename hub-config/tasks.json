@@ -174,8 +174,8 @@
               "optional": null
             },
             "location": {
-              "required": null,
-              "optional": ["06", "37"]
+              "required": ["06", "37"],
+              "optional": null
             },
             "target": {
               "required": ["inc death", "inc case"],
@@ -240,8 +240,8 @@
               "optional": null
             },
             "location": {
-              "required": null,
-              "optional": ["06", "37"]
+              "required": ["06", "37"],
+              "optional": null
             },
             "target": {
               "required": ["inc death", "inc case"],
