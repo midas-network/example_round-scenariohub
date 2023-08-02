@@ -1,5 +1,5 @@
 {
-    "schema_version":"https://raw.githubusercontent.com/Infectious-Disease-Modeling-Hubs/schemas/main/v1.0.0/admin-schema.json",
+    "schema_version":"https://raw.githubusercontent.com/Infectious-Disease-Modeling-Hubs/schemas/main/v2.0.0/admin-schema.json",
     "name": "Example Scenario Hub",
     "maintainer": "Scenario Modeling Hub Coordination Team",
     "contact": {
@@ -15,5 +15,6 @@
         }
     ],
     "timezone": "US/Eastern",
-    "file_format":["csv", "parquet"]
+    "file_format":["csv", "parquet"],
+    "model_output_dir": "data-processed"
 }
