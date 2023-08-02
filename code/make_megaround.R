@@ -128,5 +128,17 @@ ggplot2::ggplot(data = test, aes(x = horizon, y = value, group = group,
                         color = model_name)) +
   geom_line()
 
+# Special split file for team3
+df <- arrow::read_parquet("data-processed/team3-modelc/2023-04-16-team3-modelc.gz.parquet")
+lapply(unique(df$target), function(x) {
+  df_target <- dplyr::filter(df, target == x)
+  name_target <- gsub(" ", "_", x)
+  filename <- paste0("data-processed/team3-modelc/2023-04-16-team3-modelc-",
+                     name_target, ".gz.parquet")
+  arrow::write_parquet(df_target, filename,
+                       compression = "gzip", compression_level = 9)
+})
+file.remove("data-processed/team3-modelc/2023-04-16-team3-modelc.gz.parquet")
+
 # Clean environment
 rm(list = ls())
