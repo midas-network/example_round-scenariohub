@@ -11,10 +11,10 @@ loc_list <- c("US", "01", "02", "04", "05", "06", "08", "09", "10", "11", "12",
               "36", "37", "38", "39", "40", "41", "42", "44", "45", "46", "47",
               "48", "49", "50", "51", "53", "54", "55", "56", "60", "66", "69",
               "72", "74", "78")
-team_model <- c("team1_modela", "team2_modelb", "team3_modelc","team4_modeld",
-                "team5_modele", "team6_modelf", "team7_modelg")
+team_model <- c("team1-modela", "team2-modelb", "team3-modelc","team4-modeld",
+                "team5-modele", "team6-modelf", "team7-modelg")
 
-df_team <- lapply(team_model[4], function(tm) {
+df_team <- lapply(team_model, function(tm) {
   print(tm)
   if (tm == team_model[3]) {
     max_horizon = 250
