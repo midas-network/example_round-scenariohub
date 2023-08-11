@@ -8,7 +8,7 @@
         {
           "task_ids": {
             "origin_date": {
-              "required": ["2023-09-10"],
+              "required": ["2023-09-03"],
               "optional": null
             },
              "scenario_id": {
@@ -62,7 +62,7 @@
         {
           "task_ids": {
             "origin_date": {
-              "required": ["2023-09-10"],
+              "required": ["2023-09-03"],
               "optional": null
             },
              "scenario_id": {
@@ -116,7 +116,7 @@
         {
           "task_ids": {
             "origin_date": {
-              "required": ["2023-09-10"],
+              "required": ["2023-09-03"],
               "optional": null
             },
              "scenario_id": {
@@ -182,7 +182,7 @@
         {
           "task_ids": {
             "origin_date": {
-              "required": ["2023-09-10"],
+              "required": ["2023-09-03"],
               "optional": null
             },
              "scenario_id": {
@@ -248,7 +248,7 @@
         {
           "task_ids": {
             "origin_date": {
-              "required": ["2023-09-10"],
+              "required": ["2023-09-03"],
               "optional": null
             },
              "scenario_id": {
@@ -301,7 +301,7 @@
         {
           "task_ids": {
             "origin_date": {
-              "required": ["2023-09-10"],
+              "required": ["2023-09-03"],
               "optional": null
             },
              "scenario_id": {

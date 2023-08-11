@@ -1,3 +1,6 @@
+# Clean environment
+rm(list = ls())
+
 # Library
 library(dplyr)
 library(hubUtils) #from GitHub: Infectious-Disease-Modeling-Hubs/hubUtils
@@ -78,9 +81,14 @@ make_peak <- function(df, quantile_vect = c(0.01, 0.025, 0.05, 0.1, 0.15, 0.2,
             }   else {
                 peak_cum <- peak_prob
             }
+            if (peak_cum >= 1) peak_cum <- 1
             date <- MMWRweek::MMWRweek(
                 unique(dft$origin_date) + (i * 7) - 1)
-            date <- paste0("EW", date$MMWRyear, date$MMWRweek)
+            if (nchar(date$MMWRweek) < 2) {
+                date <- paste0("EW", date$MMWRyear, "0", date$MMWRweek)
+            } else {
+                date <- paste0("EW", date$MMWRyear, date$MMWRweek)
+            }
             df_epi <- distinct(
                 dft[, c("origin_date", "scenario_id", "location", "target",
                        "age_group", "team_model")]) %>%
@@ -121,7 +129,7 @@ req_df <- lapply(config_round1$model_tasks[1:2], function(x) {
                                  "team4_modeld", "team5_modele", "team6_modelf")
                   ))
     if (is.null(col$location)) {
-        col$location <- x$task_ids$location$optional
+        col$location <- x$task_ids$location$optional[1:52]
     }
     if (is.null(col$horizon)) {
         col$horizon <- NA
@@ -157,11 +165,11 @@ all_data <- lapply(unique(req_df$team_model), function(model_id) {
     if (model_id == "team5_model5")
         df <- filter(df, location %in% c("US", "10", "24", "36"))
     if (model_id %in% c("team1_modela", "team2_modelb", "team3_modelc",
-                        "team5_model5")) {
+                        "team5_modele")) {
         # Calculate quantiles and cumulative
         df <- make_quantiles(df)
     }
-    if (model_id %in% c("team1_modela", "team2_modelb", "team5_model5")) {
+    if (model_id %in% c("team1_modela", "team2_modelb", "team5_modele")) {
         # # Calculate peak targets
         df <- make_peak(df)
     }
@@ -178,3 +186,6 @@ lapply(all_data, function(df) {
                        team_name, ".parquet")
     arrow::write_parquet(df, filename)
 })
+
+# Clean environment
+rm(list = ls())
