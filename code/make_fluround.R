@@ -29,9 +29,9 @@ make_quantiles <- function(df,
         data.table::data.table()
     df_cum <- df_cum[, value_cum := calc_cum(.SD), by = cumul_group ] %>%
         dplyr::select(origin_date, scenario_id, location, target, horizon,
-                      output_type, output_type_id, value = value_cum) %>%
+                      output_type, output_type_id, age_group,
+                      value = value_cum) %>%
         mutate(target = gsub("inc", "cum", target),
-               age_group = "0-130",
                team_model = unique(df$team_model))
     df <- rbind(df, df_cum)
     # quantiles
@@ -49,7 +49,8 @@ make_peak <- function(df, quantile_vect = c(0.01, 0.025, 0.05, 0.1, 0.15, 0.2,
                                             0.55, 0.6, 0.65, 0.7, 0.75, 0.8,
                                             0.85, 0.9, 0.95, 0.975, 0.99)) {
     df_size_quant <- df %>%
-        filter(target == "inc hosp", output_type == "sample") %>%
+        filter(target == "inc hosp", output_type == "sample",
+               age_group == "0-130") %>%
         group_by(origin_date, scenario_id, location, target, age_group,
                  team_model, output_type_id) %>%
         summarise(max = max(value)) %>%
@@ -63,7 +64,8 @@ make_peak <- function(df, quantile_vect = c(0.01, 0.025, 0.05, 0.1, 0.15, 0.2,
         mutate(horizon = NA,
                target = "peak size hosp")
     df_time <- df %>%
-        filter(target == "inc hosp", output_type == "sample") %>%
+        filter(target == "inc hosp", output_type == "sample",
+               age_group == "0-130") %>%
         group_by(origin_date, scenario_id, location, target, age_group,
                  team_model, output_type_id) %>%
         mutate(sel = ifelse(max(value) == value, horizon, NA)) %>%
@@ -126,7 +128,8 @@ req_df <- lapply(config_round1$model_tasks[1:2], function(x) {
     col <- c(task_id_col, unlist(output_col, FALSE),
              list(value = NA,
                   team_model = c("team1_modela", "team2_modelb", "team3_modelc",
-                                 "team4_modeld", "team5_modele", "team6_modelf")
+                                 "team4_modeld", "team5_modele", "team6_modelf",
+                                 "team7_modelg")
                   ))
     if (is.null(col$location)) {
         col$location <- x$task_ids$location$optional[1:52]
@@ -158,18 +161,26 @@ attr(req_df, "out.attrs") <- NULL
 # Team 4: only samples
 # Team 5: only 4 locations
 # Team 6: only samples hosp
+# team 7: optional age group
 all_data <- lapply(unique(req_df$team_model), function(model_id) {
     df <- dplyr::filter(req_df, team_model == model_id)
     if (model_id %in% c("team2_modelb", "team6_modelf"))
         df <- filter(df, grepl("hosp", target))
+    if (model_id %in% c("team7_modelg")) {
+        df_child <- mutate(df, age_group = "0-17",
+                           value = value / 4)
+        df_adult <- mutate(df, age_group = "18-130", value = value * 3/4)
+        df <- rbind(df, df_child, df_adult)
+    }
     if (model_id == "team5_model5")
         df <- filter(df, location %in% c("US", "10", "24", "36"))
     if (model_id %in% c("team1_modela", "team2_modelb", "team3_modelc",
-                        "team5_modele")) {
+                        "team5_modele", "team7_modelg")) {
         # Calculate quantiles and cumulative
         df <- make_quantiles(df)
     }
-    if (model_id %in% c("team1_modela", "team2_modelb", "team5_modele")) {
+    if (model_id %in% c("team1_modela", "team2_modelb", "team5_modele",
+                        "team7_modelg")) {
         # # Calculate peak targets
         df <- make_peak(df)
     }
