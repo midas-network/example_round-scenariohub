@@ -155,13 +155,13 @@ req_df <- dplyr::bind_rows(req_df)
 attr(req_df, "out.attrs") <- NULL
 
 # Update values per team:
-# Team1: all possible data
+# Team1: all possible data (no age group)
 # Team 2: no death data
 # Team 3: no peak target
 # Team 4: only samples
 # Team 5: only 4 locations
 # Team 6: only samples hosp
-# team 7: optional age group
+# team 7: all possible data (with optional age group)
 all_data <- lapply(unique(req_df$team_model), function(model_id) {
     df <- dplyr::filter(req_df, team_model == model_id)
     if (model_id %in% c("team2_modelb", "team6_modelf"))
