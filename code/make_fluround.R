@@ -110,7 +110,7 @@ make_peak <- function(df, quantile_vect = c(0.01, 0.025, 0.05, 0.1, 0.15, 0.2,
 
 # Prerequisite
 config <- hubUtils::read_config(getwd(), config = "tasks")
-config_round1 <- config$rounds[[1]]
+config_round1 <- config$rounds[[3]]
 
 # Data Creation
 req_df <- lapply(config_round1$model_tasks[1:2], function(x) {
