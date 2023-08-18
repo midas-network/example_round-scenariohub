@@ -36,6 +36,12 @@ if (length(pr_sub_files) > 0) {
     test <- capture.output(try(
       validate_submission(basename(pr_sub_files_group), js_def = js_def_file,
                           lst_gs = lst_gs, pop_path = pop_path)))
+    if (length(grep("Run validation on fil", test, invert = TRUE)) == 0) {
+      test <- try(
+        validate_submission(basename(pr_sub_files_group), js_def = js_def_file,
+                            lst_gs = lst_gs, pop_path = pop_path))
+      test <- test[1]
+    }
     # list of the viz and validation results
     test_tot <- list(valid = test)
     # returns all output
@@ -61,7 +67,7 @@ lapply(seq_len(length(message)), function(x) {
 })
 
 # Validate or stop the github actions
-if (any(grepl("\U000274c Error", test_valid))) {
+if (any(grepl("(\U000274c )?Error", test_valid))) {
   stop("The submission contains one or multiple issues")
 } else if (any(grepl("Warning", test_valid))) {
   warning(" The submission is accepted but contains some warnings")
