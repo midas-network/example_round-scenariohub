@@ -1,5 +1,6 @@
 # Packages required for the validation (update cache on the 2023-08-18)
-https://github.com/midas-network/SMHvalidation/archive/refs/heads/new_input_format.zip #v0.0.2
+# SMHValidation #v0.0.2
+# hubUtils
 arrow
 covidcast
 cowplot
