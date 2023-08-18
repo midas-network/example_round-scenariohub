@@ -33,4 +33,7 @@ jobs:
                   install.packages(c("arrow", "gh", "remotes"))
                   Sys.unsetenv("NOT_CRAN")
                   remotes::install_url("https://github.com/Infectious-Disease-Modeling-Hubs/hubUtils/archive/refs/heads/main.zip")
-                  remotes::install_url("https://github.com/midas-network/SMHvalidation/archive/refs/heads/main.zip")'
+                  remotes::install_github("midas-network/SMHvalidation", 
+                        build_vignettes = TRUE, 
+                        dependencies = TRUE,
+                        ref = "main") '
