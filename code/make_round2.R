@@ -17,9 +17,9 @@ req_df <- lapply(config_round2$model_tasks, function(x) {
                          output_type_id = x$output_type[[y]]$type_id$required))
     col <- c(task_id_col, unlist(output_col, FALSE),
              list(value = 0,
-                  team_model = c("team1_modela", "team2_modelb", "team3_modelc",
-                                 "team4_modeld", "team5_modele", "team6_modelf",
-                                 "team7_modelg")))
+                  team_model = c("team1-modela", "team2-modelb", "team3-modelc",
+                                 "team4-modeld", "team5-modele", "team6-modelf",
+                                 "team7-modelg")))
     df <- expand.grid(col, stringsAsFactors = FALSE)
     return(df)
 })
@@ -37,7 +37,7 @@ attr(req_df, "out.attrs") <- NULL
 
 lapply(unique(req_df$team_model), function(x) {
     df <- dplyr::filter(req_df, team_model == x) %>% dplyr::select(-team_model)
-    if (x == "team1_modela") df$value <- as.integer(df$value)
+    if (x == "team1-modela") df$value <- as.integer(df$value)
     or_date <- config_round2$model_tasks[[1]]$task_ids$origin_date$required
     filename <- paste0("data-processed/", x, "/", or_date, "-", x, ".parquet")
     arrow::write_parquet(df, filename)
