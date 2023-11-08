@@ -6,6 +6,121 @@ library(hubUtils) #from GitHub: Infectious-Disease-Modeling-Hubs/hubUtils
 
 # Function
 
+# Prepare sample information for a specific column (col_update parameter)
+# Pairing by age group and location only
+prep_sample_information <- function(df, col_update, rep = 100, same_rep = FALSE,
+                                    add_grouping = NULL) {
+    if (is.null(add_grouping)) {
+        n = 1
+        for (loc in unique(df$location)) {
+            for (scen in unique(df$scenario_id)) {
+                # For each scenario / location combination
+                test <- df[which(df$scenario_id == scen & df$location == loc &
+                                     df$output_type == "sample"), ]
+                # Extract the unique pairing values (all horizon, and age group)
+                index <-  distinct(test, age_group, horizon)
+                # Create an Index: repeat `rep` number of times the unique
+                # pairing values and assign an index to each time
+                all_index <- data.frame()
+                if (isFALSE(same_rep)) {
+                    for (n in seq(n, n + (rep - 1), 1)) {
+                        index[[col_update]] <- n
+                        all_index <- rbind(all_index, index)
+                    }
+                } else {
+                    all_index <- index[rep(seq_len(nrow(index)), rep), ]
+                    all_index[[col_update]] <- n
+                }
+                n <- n + 1
+                # Arrange both the index and original data by pairing variables
+                # and add the index information on the original data
+                all_index <- arrange(all_index, horizon, age_group)
+                test <- arrange(test, horizon, age_group)
+                test[[col_update]] <- all_index[[col_update]]
+                df[which(df$scenario_id == scen & df$location == loc &
+                             df$output_type == "sample"), ] <- test
+            }
+        }
+    } else if (length(add_grouping) == 1)  {
+        if  (add_grouping == "location") {
+            col1 = "location"
+            col2 = "scenario_id"
+        } else if (add_grouping == "scenario_id") {
+            col1 = "scenario_id"
+            col2 = "location"
+        } else {
+            error("Grouping value not recognize")
+        }
+        for (val1 in unique(df[[col1]])) {
+            n = 1
+            for (val2 in unique(df[[col2]])) {
+                # For each scenario / location combination
+                test <- df[which(df[[col1]] == val1 &
+                                     df[[col2]] == val2 &
+                                     df$output_type == "sample"), ]
+                # Extract the unique pairing values
+                index <-  distinct(test, age_group, horizon)
+                # Create an Index: repeat `rep` number of times the unique
+                # pairing values and assign an index to each time
+                all_index <- data.frame()
+                if (isFALSE(same_rep)) {
+                    for (n in seq(n, n + (rep - 1), 1)) {
+                        index[[col_update]] <- n
+                        all_index <- rbind(all_index, index)
+                    }
+                } else {
+                    all_index <- index[rep(seq_len(nrow(index)), rep), ]
+                    all_index[[col_update]] <- n
+                }
+                n <- n + 1
+                # Arrange both the index and original data by pairing variables
+                # and add the index information on the original data
+                all_index <- arrange(all_index, horizon, age_group)
+                test <- arrange(test, horizon, age_group)
+                test[[col_update]] <- all_index[[col_update]]
+                df[which(df[[col1]] == val1 & df[[col2]] == val2 &
+                             df$output_type == "sample"), ] <- test
+
+            }
+        }
+    } else if (all(add_grouping %in% c("location", "scenario_id"))) {
+        for (loc in unique(df$location)) {
+            for (scen in unique(df$scenario_id)) {
+                n = 1
+                # For each scenario / location combination
+                test <- df[which(df$scenario_id == scen & df$location == loc &
+                                     df$output_type == "sample"), ]
+                # Extract the unique pairing values (all horizon, and age group)
+                index <-  distinct(test, age_group, horizon)
+                # Create an Index: repeat `rep` number of times the unique
+                # pairing values and assign an index to each time
+                all_index <- data.frame()
+                if (isFALSE(same_rep)) {
+                    for (n in seq(n, n + (rep - 1), 1)) {
+                        index[[col_update]] <- n
+                        all_index <- rbind(all_index, index)
+                    }
+                } else {
+                    all_index <- index[rep(seq_len(nrow(index)), rep), ]
+                    all_index[[col_update]] <- n
+                }
+                n <- n + 1
+                # Arrange both the index and original data by pairing variables
+                # and add the index information on the original data
+                all_index <- arrange(all_index, horizon, age_group)
+                test <- arrange(test, horizon, age_group)
+                test[[col_update]] <- all_index[[col_update]]
+                df[which(df$scenario_id == scen & df$location == loc &
+                             df$output_type == "sample"), ] <- test
+            }
+        }
+
+    }
+
+
+    return(df)
+}
+
 # Add age group in RSV net data
 # Filter age group to aggregate
 # Group by location and horizon
@@ -41,7 +156,7 @@ new_age_group <- function(df, agg_age_groups, new_age_group, fct = "sum") {
 make_value_col <- function(df, rsv_net) {
     # - Select a random date before 2023-2024 season, from the start of the
     # season(only September, October included)
-    rsv_net <- filter(rsv_net, date < "2023-09-01", date >"2020-01-01")
+    rsv_net <- filter(rsv_net, date < "2023-09-01", date > "2020-01-01")
     start_date <- as.Date(sample(grep("\\d{4}-10|\\d{4}-09",
                                       unique(rsv_net$date), value = TRUE), 1))
     end_date <- start_date + 29 * 7
@@ -65,9 +180,10 @@ make_value_col <- function(df, rsv_net) {
     # - As all the scenario have the same value, multiply by small factor for
     # each scenario
     df_val <- lapply(unique(df_val$scenario_id), function(scen) {
-        multi <- sample(seq(1, 1.3, by = 0.0001), 1)
+        multi <- sample(seq(1, 1.3, by = 0.01), 1)
         df_val %>% filter(scenario_id == scen) %>%
-            mutate(value = value * multi)
+            mutate(value = (value + horizon + as.numeric(output_type_id)) *
+                       multi)
     }) %>% bind_rows()
     # return output
     return(df_val)
@@ -117,7 +233,7 @@ attr(req_df, "out.attrs") <- NULL
 
 # Update values per team:
 # - update value column from RSV-NET data
-# - calculate peak and quantiles column
+# - calculate peak and quantiles column for all team-models
 all_data <- lapply(unique(req_df$team_model), function(model_id) {
     print(model_id)
     df <- dplyr::filter(req_df, team_model == model_id)
@@ -128,11 +244,57 @@ all_data <- lapply(unique(req_df$team_model), function(model_id) {
         mutate(value = ifelse(is.na(value), 0, value)) %>%
         mutate(value = ifelse(value < 0, 0, value))
     df <- make_quantiles(df)
-    df <- make_peak(df)
+    df <- make_peak(df, horizon_max = max(df$horizon, na.rm = TRUE))
     return(df)
 }) %>% setNames(unique(req_df$team_model))
 
 # Update samples id information
+library(magrittr)
+# Recreate different example of the new format
+# Team 1: same parameter set, but each run is different because of
+#   stochasticity, paired on horizon and age group
+all_data$`team1-modela` %<>% dplyr::mutate(
+    run_grouping = ifelse(output_type == "sample", 1, NA),
+    stochastic_run = ifelse(output_type == "sample", 0, NA),
+    output_type_id = ifelse(output_type == "sample", NA, output_type_id)
+) %>% prep_sample_information("stochastic_run")
+
+# Team 2: different parameter sets for each run, runs are not stochastic,
+#   paired on horizon and age group
+all_data$`team2-modelb` %<>% dplyr::mutate(
+    run_grouping = ifelse(output_type == "sample", 0, NA),
+    stochastic_run = ifelse(output_type == "sample", 1, NA),
+    output_type_id = ifelse(output_type == "sample", NA, output_type_id)
+) %>% prep_sample_information("run_grouping")
+
+# Team 3: different parameter sets for every stochastic run, paired on horizon
+#  and age group
+all_data$`team3-modelc` %<>% dplyr::mutate(
+    run_grouping = ifelse(output_type == "sample", 0, NA),
+    stochastic_run = ifelse(output_type == "sample", 0, NA),
+    output_type_id = ifelse(output_type == "sample", NA, output_type_id)
+) %>% prep_sample_information("run_grouping") %>%
+    prep_sample_information("stochastic_run")
+
+# Team 4: different parameter sets, replicated in multiple stochastic runs,
+#  paired on horizon and age group
+all_data$`team4-modeld` %<>% dplyr::mutate(
+    run_grouping = ifelse(output_type == "sample", 0, NA),
+    stochastic_run = ifelse(output_type == "sample", 0, NA),
+    output_type_id = ifelse(output_type == "sample", NA, output_type_id)
+) %>% prep_sample_information("run_grouping", same_rep = T) %>%
+    prep_sample_information("stochastic_run")
+
+# Team 5: different parameter sets, replicated in multiple stochastic runs,
+#  paired on horizon and age group and scenario
+all_data$`team5-modele` %<>% dplyr::mutate(
+    run_grouping = ifelse(output_type == "sample", 0, NA),
+    stochastic_run = ifelse(output_type == "sample", 0, NA),
+    output_type_id = ifelse(output_type == "sample", NA, output_type_id)
+) %>% prep_sample_information("run_grouping", same_rep = T,
+                              add_grouping = "scenario_id") %>%
+    prep_sample_information("stochastic_run",
+                            add_grouping = "scenario_id")
 
 # Write output file in parquet format
 lapply(all_data, function(df) {

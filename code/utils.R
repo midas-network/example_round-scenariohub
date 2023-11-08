@@ -40,7 +40,8 @@ make_quantiles <- function(df,
 make_peak <- function(df, quantile_vect = c(0.01, 0.025, 0.05, 0.1, 0.15, 0.2,
                                             0.25, 0.3, 0.35, 0.4,0.45, 0.5,
                                             0.55, 0.6, 0.65, 0.7, 0.75, 0.8,
-                                            0.85, 0.9, 0.95, 0.975, 0.99)) {
+                                            0.85, 0.9, 0.95, 0.975, 0.99),
+                      horizon_max = 39) {
     df_size_quant <- df %>%
         filter(target == "inc hosp", output_type == "sample",
                age_group == "0-130") %>%
@@ -68,7 +69,7 @@ make_peak <- function(df, quantile_vect = c(0.01, 0.025, 0.05, 0.1, 0.15, 0.2,
                                     df_time$age_group))
     peak_time <- lapply(lst_time, function(dft) {
         df_epitime <- NULL
-        for (i in 1:39) {
+        for (i in 1:horizon_max) {
             peak_prob = nrow(dplyr::filter(dft, horizon == i)) / 100
             if (!is.null(df_epitime)) {
                 peak_cum <- filter(df_epitime, horizon == i - 1) %>% .$value

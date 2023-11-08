@@ -791,7 +791,7 @@
 							"optional":["peak size hosp"]
 						},
 						"horizon":{
-							"required":["NA"],
+							"required":null,
 							"optional":null},
 						"location":{
 							"required":null,
@@ -842,7 +842,7 @@
 							"optional":["peak time hosp"]
 						},
 						"horizon":{
-							"required":["NA"],
+							"required":null,
 							"optional":null
 						},
 						"location":{
