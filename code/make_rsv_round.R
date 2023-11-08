@@ -293,8 +293,7 @@ all_data$`team5-modele` %<>% dplyr::mutate(
     output_type_id = ifelse(output_type == "sample", NA, output_type_id)
 ) %>% prep_sample_information("run_grouping", same_rep = T,
                               add_grouping = "scenario_id") %>%
-    prep_sample_information("stochastic_run",
-                            add_grouping = "scenario_id")
+    prep_sample_information("stochastic_run")
 
 # Write output file in parquet format
 lapply(all_data, function(df) {
