@@ -285,8 +285,9 @@ all_data$`team4-modeld` %<>% dplyr::mutate(
 ) %>% prep_sample_information("run_grouping", same_rep = T) %>%
     prep_sample_information("stochastic_run")
 
-# Team 5: different parameter sets, replicated in multiple stochastic runs,
-#  paired on horizon and age group and scenario
+# Team 5:  paired on horizon and age group and scenario (scenarios are
+# assumed to have the same basic parameters, aside from scenario-specific
+# parameters, but come from different stochastic runs)
 all_data$`team5-modele` %<>% dplyr::mutate(
     run_grouping = ifelse(output_type == "sample", 0, NA),
     stochastic_run = ifelse(output_type == "sample", 0, NA),
