@@ -214,7 +214,7 @@ req_df <- lapply(rsv1$model_tasks, function(x) {
         output_col <- lapply(
             names(x$output_type),
             function(y) list(output_type = y,
-                             output_type_id = x$output_type[[y]]$output_type_id$required))
+                             output_type_id = 1:x$output_type$sample$output_type_id$max_samples_per_task))
         col <- c(task_id_col, unlist(output_col, FALSE),
                  list(value = NA,
                       team_model = c("team1-modela", "team2-modelb", "team3-modelc",
