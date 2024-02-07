@@ -41,25 +41,26 @@ make_peak <- function(df, quantile_vect = c(0.01, 0.025, 0.05, 0.1, 0.15, 0.2,
                                             0.25, 0.3, 0.35, 0.4,0.45, 0.5,
                                             0.55, 0.6, 0.65, 0.7, 0.75, 0.8,
                                             0.85, 0.9, 0.95, 0.975, 0.99),
-                      horizon_max = 39) {
+                      horizon_max = 39,
+                      col_name_id = c("origin_date", "scenario_id", "location",
+                                      "target", "age_group", "team_model"),
+                      peak_target = "inc hosp", age_grp = "0-130") {
     df_size_quant <- df %>%
-        filter(target == "inc hosp", output_type == "sample",
-               age_group == "0-130") %>%
-        group_by(origin_date, scenario_id, location, target, age_group,
-                 team_model, output_type_id) %>%
+        filter(target == peak_target, output_type == "sample",
+               age_group == age_grp ) %>%
+        group_by(c(all_of(col_name_id), output_type_id)) %>%
         summarise(max = max(value)) %>%
         ungroup() %>%
         reframe(
             value = quantile(max, quantile_vect),
             output_type = "quantile",
             output_type_id = quantile_vect,
-            .by = all_of(c("origin_date", "scenario_id", "location",
-                           "target", "age_group", "team_model"))) %>%
+            .by = all_of(col_name_id)) %>%
         mutate(horizon = NA,
-               target = "peak size hosp")
+               target = gsub("inc ", "peak size ", peak_target))
     df_time <- df %>%
-        filter(target == "inc hosp", output_type == "sample",
-               age_group == "0-130") %>%
+        filter(target == peak_target, output_type == "sample",
+               age_group == age_grp) %>%
         group_by(origin_date, scenario_id, location, target, age_group,
                  team_model, output_type_id) %>%
         mutate(sel = ifelse(max(value) == value, horizon, NA)) %>%
@@ -85,14 +86,12 @@ make_peak <- function(df, quantile_vect = c(0.01, 0.025, 0.05, 0.1, 0.15, 0.2,
             } else {
                 date <- paste0("EW", date$MMWRyear, date$MMWRweek)
             }
-            df_epi <- distinct(
-                dft[, c("origin_date", "scenario_id", "location", "target",
-                        "age_group", "team_model")]) %>%
+            df_epi <- distinct(dft[, col_name_id]) %>%
                 mutate(horizon = i,
                        output_type = "cdf",
                        output_type_id = date,
                        value = peak_cum,
-                       target = "peak time hosp")
+                       target = gsub("inc ", "peak time ", peak_target))
             df_epitime <- rbind(df_epi, df_epitime)
         }
         df_epitime$horizon <- NA
@@ -101,3 +100,45 @@ make_peak <- function(df, quantile_vect = c(0.01, 0.025, 0.05, 0.1, 0.15, 0.2,
     tot_df <- rbind(df, df_size_quant, peak_time)
     return(tot_df)
 }
+
+# Prepare sample information for a specific column (col_update parameter)
+prep_sample_information <- function(df, col_update, pairing, rep = 100,
+                                    same_rep = FALSE) {
+
+    df0 <- dplyr::filter(df, output_type != "sample")
+    df_id <- dplyr::filter(df, output_type == "sample")
+    col_sel <- !colnames(df_id) %in% c(pairing, "output_type", "output_type_id",
+                                       "value", "run_grouping",
+                                       "stochastic_run")
+    unpaired_col <- colnames(df_id)[col_sel]
+    list_df <- split(df_id, df_id[,unpaired_col], drop = TRUE)
+    id_df <- lapply(seq_along(list_df), function(x) {
+        test <- list_df[[x]]
+        # Extract the unique pairing values
+        index <-  distinct(test[, pairing])
+        # Create an Index: repeat `rep` number of times the unique
+        # pairing values and assign an index to each time
+        all_index <- data.frame()
+        n <- rep * x - rep
+        if (isFALSE(same_rep)) {
+            for (n in seq(n + 1, rep * x, 1)) {
+                index[[col_update]] <- n
+                all_index <- rbind(all_index, index)
+            }
+        } else {
+            all_index <- index[rep(seq_len(nrow(index)), rep), ]
+            all_index[[col_update]] <- n
+        }
+        # Arrange both the index and original data by pairing variables
+        # and add the index information on the original data
+        all_index <- arrange(all_index, across(pairing))
+        test <- arrange(test, across(pairing))
+        test[[col_update]] <- all_index[[col_update]]
+        return(test)
+    })
+    id_df <- bind_rows(id_df)
+    df_tot <- rbind(df0, id_df)
+    return(df_tot)
+}
+
+
