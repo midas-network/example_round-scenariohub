@@ -21,9 +21,9 @@
 ##' @param opt_loc "all" if all additional optional locations are accepted for
 ##' this target, a subset of value, or NA if no optional location is accepted.
 ##' By default, NA
-##' @param req_horizon "all" if all the complete required time series is required
-##' for this  target, a subset of value, or NA if no time series required.
-##' By default, "all"
+##' @param req_horizon "all" if all the complete required time series is
+##'  required for this  target, a subset of value, or NA if no time series
+##'  required. By default, "all"
 ##' @param opt_horizon "all" if all the all additional weeks are accepted for
 ##' this target, a subset of value, or NA if no optional additional weeks
 ##' expected. By default, NA
@@ -153,7 +153,8 @@
 #    opt_horizons <- NULL
 #  }
 #  # Scenario/round information
-#  scen_info <- df_scenario[df_scenario$round == paste0("round", round_number), ]
+#  scen_info <- df_scenario[df_scenario$round == paste0("round",
+#                                                       round_number), ]
 #  # Start date
 #  first_week_ahead <- as.Date(unique(scen_info$date_round)) + 6
 #  if (length(first_week_ahead) > 1)

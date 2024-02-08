@@ -4,12 +4,11 @@ library(gh)
 # check if submissions file
 pr_files <- gh::gh(paste0("GET /repos/",
                           "midas-network/megaround-scenariohub/", "pulls/",
-                          Sys.getenv("GH_PR_NUMBER"),"/files"))
+                          Sys.getenv("GH_PR_NUMBER"), "/files"))
 
 pr_files_name <- purrr::map(pr_files, "filename")
-pr_sub_files <- grep(
-  "data-processed/.*/\\d{4}-\\d{2}-\\d{2}-.+(.pqt|.parquet)",
-  pr_files_name, value = TRUE)
+pr_sub_files <- grep("data-processed/.*/\\d{4}-\\d{2}-\\d{2}-.+(.pqt|.parquet)",
+                     pr_files_name, value = TRUE)
 pop_path <- "data-locations/locations.csv"
 js_def_file <- "hub-config/tasks.json"
 lst_gs <- NULL
@@ -33,13 +32,16 @@ if (length(pr_sub_files) > 0) {
       download.file(url_link, basename(url_link))
     })
     # run validation
-    test <- capture.output(try(
-      validate_submission(basename(pr_sub_files_group), js_def = js_def_file,
-                          lst_gs = lst_gs, pop_path = pop_path)))
+    test <-
+      capture.output(try(validate_submission(basename(pr_sub_files_group),
+                                             js_def = js_def_file,
+                                             lst_gs = lst_gs,
+                                             pop_path = pop_path)))
     if (length(grep("Run validation on fil", test, invert = TRUE)) == 0) {
-      test <- try(
-        validate_submission(basename(pr_sub_files_group), js_def = js_def_file,
-                            lst_gs = lst_gs, pop_path = pop_path))
+      test <-
+        try(validate_submission(basename(pr_sub_files_group),
+                                js_def = js_def_file,
+                                lst_gs = lst_gs, pop_path = pop_path))
       test <- test[1]
     }
     # list of the viz and validation results
@@ -48,11 +50,10 @@ if (length(pr_sub_files) > 0) {
     return(test_tot)
   })
 }  else {
-  test_tot <-  list(list(
-    valid = paste0(
-      "No projection submission file in the standard SMH file ",
-      "format found in the Pull-Request. No validation was run.")
-  ))
+  test_tot <-
+    list(list(valid = paste0("No projection submission file in the standard ",
+                             "SMH file format found in the Pull-Request. No ",
+                             "validation was run.")))
 }
 
 # Post validation results as comment on the open PR
@@ -61,7 +62,7 @@ message <- purrr::map(test_valid, paste, collapse = "\n")
 
 lapply(seq_len(length(message)), function(x) {
   gh::gh(paste0("POST /repos/", "midas-network/megaround-scenariohub/",
-                "issues/", Sys.getenv("GH_PR_NUMBER"),"/comments"),
+                "issues/", Sys.getenv("GH_PR_NUMBER"), "/comments"),
          body = message[[x]],
          .token = Sys.getenv("GH_TOKEN"))
 })
