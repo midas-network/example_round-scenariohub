@@ -19,7 +19,7 @@ make_quantiles <- function(df,
       }
       return(df$value_cum)
     }
-    df_cum <- dplyr::arrange(df, dplyr::across("horizon"))
+    df_cum <- dplyr::arrange(df, dplyr::pick("horizon"))
     df_cum$value_cum <- df_cum$value
     df_cum <- data.table::data.table(df_cum)
     df_cum <- df_cum[, value_cum := calc_cum(.SD), by = cumul_group] %>%
@@ -52,7 +52,7 @@ make_peak <- function(df,
   df_size_quant <- df %>%
     dplyr::filter(target == peak_target, output_type == "sample",
                   age_group == age_grp) %>%
-    dplyr::group_by(c(dplyr::all_of(col_name_id), "output_type_id")) %>%
+    dplyr::group_by(dplyr::pick(c(col_name_id, "output_type_id"))) %>%
     dplyr::summarise(max = max(value)) %>%
     dplyr::ungroup() %>%
     dplyr::reframe(value = quantile(max, quantile_vect),
@@ -63,8 +63,7 @@ make_peak <- function(df,
   df_time <- df %>%
     dplyr::filter(target == peak_target, output_type == "sample",
                   age_group == age_grp) %>%
-    dplyr::group_by(origin_date, scenario_id, location, target, age_group,
-                    team_model, output_type_id) %>%
+    dplyr::group_by(dplyr::pick(c(col_name_id, "output_type_id"))) %>%
     dplyr::mutate(sel = ifelse(max(value) == value, horizon, NA)) %>%
     dplyr::ungroup() %>%
     dplyr::filter(!is.na(sel))
@@ -115,7 +114,7 @@ prep_sample_information <- function(df, col_update, pairing, rep = 100,
   id_df <- lapply(seq_along(list_df), function(x) {
     test <- list_df[[x]]
     # Extract the unique pairing values
-    index <-  distinct(test[, pairing])
+    index <- dplyr::distinct(test[, pairing])
     # Create an Index: repeat `rep` number of times the unique
     # pairing values and assign an index to each time
     all_index <- data.frame()
@@ -131,8 +130,8 @@ prep_sample_information <- function(df, col_update, pairing, rep = 100,
     }
     # Arrange both the index and original data by pairing variables
     # and add the index information on the original data
-    all_index <- arrange(all_index, across(pairing))
-    test <- arrange(test, across(pairing))
+    all_index <- dplyr::arrange(all_index, dplyr::pick(pairing))
+    test <- dplyr::arrange(test, dplyr::pick(pairing))
     test[[col_update]] <- all_index[[col_update]]
     return(test)
   })
@@ -208,4 +207,184 @@ update_df_val_sample <- function(df, max_value = 100000, quantile = FALSE,
                             col_name_id = quant_group,
                             peak_target = peak_target)
   return(df)
+}
+
+# Requisite:
+#  - target_data: should have a column `date`, `location` and `value`
+update_val_obs <- function(df, target_data, start_date = "2020-01-01",
+                           end_date = "2023-09-01", target = "inc hosp",
+                           add_col = NULL) {
+  # - Filter to date of interest
+  if (!is.null(start_date) && !is.null(end_date))
+    target_data <- dplyr::filter(target_data, date < end_date,
+                                 date > start_date)
+  proj_st_date <- as.Date(sample(grep("\\d{4}-10|\\d{4}-09",
+                                      unique(target_data$date), value = TRUE),
+                                 1))
+  proj_end_date <- proj_st_date + max(df$horizon, na.rm = TRUE) * 7
+  # - Filter source date to selected time window and specific target
+  obs_data <- dplyr::filter(target_data, date >= proj_st_date,
+                            date <= proj_end_date, target == !!target)
+  # - Create horizon column (with start date = horizon 1) and select columns
+  # to merge with example files: location, horizon, age group and value
+  obs_data <-
+    dplyr::mutate(obs_data,
+                  horizon = as.numeric(as.Date(date) - proj_st_date) / 7)
+  # Select column of interest
+  sel_col <- c("location", "horizon", "value", add_col)
+  obs_data <- dplyr::select(obs_data, dplyr::all_of(sel_col))
+  # - Replace value
+  df <- dplyr::mutate(df,
+                      output_type_id = as.character(output_type_id),
+                      origin_date = as.Date(origin_date))
+  df_val <- dplyr::left_join(dplyr::select(df, -value), obs_data,
+                             by = grep("value", sel_col, invert = TRUE,
+                                       value = TRUE))
+  # - As all the scenario have the same value, multiply by small factor for
+  # each scenario
+  df_val <- lapply(unique(df_val$scenario_id), function(scen) {
+    multi <- sample(seq(1, 1.1, by = 0.01), 1)
+    df_val %>%
+      dplyr::filter(scenario_id == scen) %>%
+      dplyr::mutate(value = ((value + horizon + as.numeric(output_type_id)) *
+                               multi))
+  }) %>%
+    dplyr::bind_rows()
+  # return output
+  return(df_val)
+}
+
+
+# Update samples id information for 5 teams models (required to have sample id
+# information into two additional columns: stochastic_run and run_grouping)
+team_sample_id <- function(all_data, default_pairing, max_sample) {
+  # Recreate different example of the new format
+  # Team 1: same parameter set, but each run is different because of
+  #   stochasticity, paired on horizon and age group
+  all_data$`team1-modela` <-
+    dplyr::mutate(all_data$`team1-modela`,
+                  run_grouping = ifelse(output_type == "sample", 1, NA),
+                  stochastic_run = ifelse(output_type == "sample", 0, NA),
+                  output_type_id = ifelse(output_type == "sample", NA,
+                                          output_type_id)) %>%
+    prep_sample_information("stochastic_run", default_pairing, rep = max_sample)
+
+  # Team 2: different parameter sets for each run, runs are not stochastic,
+  #   paired on horizon and age group
+  all_data$`team2-modelb` <-
+    dplyr::mutate(all_data$`team2-modelb`,
+                  run_grouping = ifelse(output_type == "sample", 0, NA),
+                  stochastic_run = ifelse(output_type == "sample", 1, NA),
+                  output_type_id = ifelse(output_type == "sample", NA,
+                                          output_type_id)) %>%
+    prep_sample_information("run_grouping", default_pairing, rep = max_sample)
+
+  # Team 3: different parameter sets for every stochastic run, paired on horizon
+  #  and age group
+  all_data$`team3-modelc` <-
+    dplyr::mutate(all_data$`team3-modelc`,
+                  run_grouping = ifelse(output_type == "sample", 0, NA),
+                  stochastic_run = ifelse(output_type == "sample", 0, NA),
+                  output_type_id = ifelse(output_type == "sample", NA,
+                                          output_type_id)) %>%
+    prep_sample_information("run_grouping", default_pairing,
+                            rep = max_sample) %>%
+    prep_sample_information("stochastic_run", default_pairing, rep = max_sample)
+
+  # Team 4: different parameter sets, replicated in multiple stochastic runs,
+  #  paired on horizon and age group
+  all_data$`team4-modeld` <-
+    dplyr::mutate(all_data$`team4-modeld`,
+                  run_grouping = ifelse(output_type == "sample", 0, NA),
+                  stochastic_run = ifelse(output_type == "sample", 0, NA),
+                  output_type_id = ifelse(output_type == "sample", NA,
+                                          output_type_id)) %>%
+    prep_sample_information("run_grouping", default_pairing, rep = max_sample,
+                            same_rep = TRUE) %>%
+    prep_sample_information("stochastic_run", default_pairing, rep = max_sample)
+
+  # Team 5:  paired on horizon and age group and scenario (scenarios are
+  # assumed to have the same basic parameters, aside from scenario-specific
+  # parameters, but come from different stochastic runs)
+  all_data$`team5-modele` <-
+    dplyr::mutate(all_data$`team5-modele`,
+                  run_grouping = ifelse(output_type == "sample", 0, NA),
+                  stochastic_run = ifelse(output_type == "sample", 0, NA),
+                  output_type_id = ifelse(output_type == "sample", NA,
+                                          output_type_id)) %>%
+    prep_sample_information("run_grouping", c(default_pairing, "scenario_id"),
+                            rep = max_sample, same_rep = TRUE) %>%
+    prep_sample_information("stochastic_run", default_pairing, rep = max_sample)
+
+  return(all_data)
+}
+
+# Write output file in parquet file
+write_output_parquet <- function(all_data, date_file = NULL, max_size = 1e6,
+                                 folder_dir = "data-processed/") {
+  lapply(all_data, function(df) {
+    team_name <- unique(df$team_model)
+    folder_name <-  paste0("data-processed/", team_name)
+    df <-  dplyr::select(df, -team_model)
+    if (!dir.exists(folder_name)) dir.create(folder_name)
+    if (is.null(date_file)) {
+      filename <- paste0(folder_name, "/", unique(df$origin_date), "-",
+                         team_name, ".parquet")
+    } else {
+      filename <- paste0(folder_name, "/", date_file, "-", team_name,
+                         ".parquet")
+    }
+    arrow::write_parquet(df, filename)
+    if (file.size(filename) / max_size > 100) {
+      file.remove(filename)
+      filename <- paste0(folder_name, "/", unique(df$origin_date), "-",
+                         team_name, ".gz.parquet")
+      arrow::write_parquet(df, filename, compression = "gzip",
+                           compression_level = 9)
+    }
+  })
+}
+
+max_sample <- function(round_spec) {
+  r_output <- unlist(purrr::map(round_spec$model_tasks, "output_type"))
+  max_sample <- unique(r_output[grep("max_sample", names(r_output))])
+  max_sample <- as.numeric(max_sample)
+  return(max_sample)
+}
+
+def_grp <- function(round_spec) {
+  r_output <- unlist(purrr::map(round_spec$model_tasks, "output_type"))
+  default_pairing <- unique(r_output[grep("joint", names(r_output))])
+  return(default_pairing)
+}
+
+# Add age group in RSV net data
+# Filter age group to aggregate
+# Group by location and horizon
+# Aggregate the values
+# Assign new age group
+# Append to data frame of origin
+new_age_group <- function(df, agg_age_groups, new_age_group, fct = "sum",
+                          col_group = c("location", "date", "target")) {
+  if (fct == "minus") {
+    min_age <- dplyr::filter(df, age_group %in% agg_age_groups[-1]) %>%
+      dplyr::group_by(dplyr::pick(col_group)) %>%
+      dplyr::summarise(value_min = sum(value)) %>%
+      dplyr::mutate(age_group = agg_age_groups[1])
+    new_ag <- dplyr::filter(df, age_group %in% agg_age_groups[1]) %>%
+      dplyr::left_join(min_age) %>%
+      dplyr::reframe(value = value - value_min, .by = c(col_group, "age_group"))
+  } else {
+    new_ag <- dplyr::filter(df, age_group %in% agg_age_groups) %>%
+      dplyr::group_by(dplyr::pick(col_group)) %>%
+      dplyr::summarise(value = sum(value)) %>%
+      dplyr::mutate(age_group = new_age_group) %>%
+      dplyr::ungroup()
+  }
+  new_ag <- new_ag %>%
+    dplyr::mutate(value = ifelse(is.na(value), 0, value)) %>%
+    dplyr::mutate(value = ifelse(value < 0, 0, value)) %>%
+    dplyr::mutate(age_group = new_age_group) %>%
+    dplyr::ungroup()
+  return(dplyr::bind_rows(df, new_ag))
 }
