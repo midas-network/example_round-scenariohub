@@ -35,27 +35,17 @@ all_data <- lapply(unique(req_df$team_model), function(model_id) {
   write_output_parquet()
 
 # EQUITY ROUNDS ------------
-equity_p1 <- config$rounds[[5]]
-req_df <- make_df_sample(equity_p1$model_tasks,
-                         max_sample =  max_sample(equity_p1))
-all_data <- lapply(unique(req_df$team_model), function(model_id) {
-  df <- dplyr::filter(req_df, team_model == model_id)
-  df <- update_df_val_sample(df)
-}) %>%
-  setNames(unique(req_df$team_model)) %>%
-  team_sample_id(def_grp(equity_p1), max_sample(equity_p1)) %>%
-  write_output_parquet(date_file = equity_p1$round_id)
-
-equity_p2 <- config$rounds[[6]]
-req_df <- make_df_sample(equity_p2$model_tasks,
-                         max_sample =  max_sample(equity_p2))
-all_data <- lapply(unique(req_df$team_model), function(model_id) {
-  df <- dplyr::filter(req_df, team_model == model_id)
-  df <- update_df_val_sample(df)
-}) %>%
-  setNames(unique(req_df$team_model)) %>%
-  team_sample_id(def_grp(equity_p2), max_sample(equity_p2)) %>%
-  write_output_parquet(date_file = equity_p2$round_id)
+lapply(config$rounds[5:6], function(x) {
+  req_df <- make_df_sample(x$model_tasks,
+                           max_sample =  max_sample(x))
+  lapply(unique(req_df$team_model), function(model_id) {
+    df <- dplyr::filter(req_df, team_model == model_id)
+    df <- update_df_val_sample(df)
+  }) %>%
+    setNames(unique(req_df$team_model)) %>%
+    team_sample_id(def_grp(x), max_sample(x)) %>%
+    write_output_parquet(date_file = x$round_id)
+})
 
 # Clean environment
 rm(list = ls())
