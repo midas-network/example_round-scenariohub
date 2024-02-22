@@ -114,7 +114,7 @@ prep_sample_information <- function(df, col_update, pairing, rep = 100,
   id_df <- lapply(seq_along(list_df), function(x) {
     test <- list_df[[x]]
     # Extract the unique pairing values
-    index <- dplyr::distinct(test[, pairing])
+    index <- dplyr::distinct(test[, pairing, FALSE])
     # Create an Index: repeat `rep` number of times the unique
     # pairing values and assign an index to each time
     all_index <- data.frame()
@@ -125,7 +125,7 @@ prep_sample_information <- function(df, col_update, pairing, rep = 100,
         all_index <- rbind(all_index, index)
       }
     } else {
-      all_index <- index[rep(seq_len(nrow(index)), rep), ]
+      all_index <- index[rep(seq_len(nrow(index)), rep), , FALSE]
       all_index[[col_update]] <- n
     }
     # Arrange both the index and original data by pairing variables
