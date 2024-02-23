@@ -47,5 +47,25 @@ lapply(config$rounds[5:6], function(x) {
     write_output_parquet(date_file = x$round_id)
 })
 
+# COVID Round 18 ------
+lapply(config$rounds[7], function(x) {
+  req_df <- make_df_sample(x$model_tasks,
+                           max_sample =  max_sample(x))
+  lapply(unique(req_df$team_model), function(model_id) {
+    df <- dplyr::filter(req_df, team_model == model_id)
+    df <-
+      update_df_val_sample(df, quantile = TRUE,
+                           quant_group = c("origin_date", "scenario_id",
+                                          "location", "target", "horizon",
+                                          "team_model"),
+                           cumul_group = c("origin_date",  "scenario_id",
+                                           "location", "target", "output_type",
+                                           "output_type_id", "team_model"))
+  }) %>%
+    setNames(unique(req_df$team_model)) %>%
+    team_sample_id(def_grp(x), max_sample(x)) %>%
+    write_output_parquet()
+})
+
 # Clean environment
 rm(list = ls())
