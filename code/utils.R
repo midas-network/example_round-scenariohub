@@ -23,11 +23,14 @@ make_quantiles <- function(df,
     df_cum$value_cum <- df_cum$value
     df_cum <- data.table::data.table(df_cum)
     df_cum <- df_cum[, value_cum := calc_cum(.SD), by = cumul_group] %>%
-      dplyr::select(origin_date, scenario_id, location, target, horizon,
-                    output_type, output_type_id, age_group,
-                    value = value_cum) %>%
-      dplyr::mutate(target = gsub("inc", "cum", target),
-                    team_model = unique(df$team_model))
+      dplyr::select(-value) %>%
+      dplyr::rename(value = value_cum)
+    if (any("team_model" %in% colnames(df))) {
+      df_cum <- dplyr::mutate(df_cum, target = gsub("inc", "cum", target),
+                              team_model = unique(df$team_model))
+    } else {
+      df_cum <- dplyr::mutate(df_cum, target = gsub("inc", "cum", target))
+    }
     df <- rbind(df, df_cum)
   }
   # quantiles
@@ -36,6 +39,10 @@ make_quantiles <- function(df,
                              output_type = "quantile",
                              output_type_id = quantile_vect,
                              .by = all_of(quant_group))
+  if (all(c("stochastic_run", "run_grouping") %in% colnames(df))) {
+    df_quant$run_grouping <- NA
+    df_quant$stochastic_run <- NA
+  }
   df <- rbind(dplyr::filter(df, grepl("inc ", target)), df_quant)
   return(df)
 }
@@ -335,7 +342,7 @@ write_output_parquet <- function(all_data, date_file = NULL, max_size = 1e6,
                          ".parquet")
     }
     arrow::write_parquet(df, filename)
-    if (file.size(filename) / max_size > 100) {
+    if (file.size(filename) / max_size > 60) {
       file.remove(filename)
       filename <- paste0(folder_name, "/", unique(df$origin_date), "-",
                          team_name, ".gz.parquet")
