@@ -10,7 +10,8 @@ make_quantiles <- function(df,
                            cumul_group = c("origin_date",  "scenario_id",
                                            "location", "target", "output_type",
                                            "output_type_id",
-                                           "age_group", "team_model")) {
+                                           "age_group", "team_model"),
+                           keep_cumul = FALSE) {
   # cumulative
   if (!is.null(cumul_group)) {
     calc_cum <- function(df) {
@@ -43,7 +44,11 @@ make_quantiles <- function(df,
     df_quant$run_grouping <- NA
     df_quant$stochastic_run <- NA
   }
-  df <- rbind(dplyr::filter(df, grepl("inc ", target)), df_quant)
+  if (keep_cumul) {
+    df <- rbind(df, df_quant)
+  } else {
+    df <- rbind(dplyr::filter(df, grepl("inc ", target)), df_quant)
+  }
   return(df)
 }
 
@@ -113,6 +118,9 @@ prep_sample_information <- function(df, col_update, pairing, rep = 100,
 
   df0 <- dplyr::filter(df, output_type != "sample")
   df_id <- dplyr::filter(df, output_type == "sample")
+  if (any(grepl("inc", df$target)) && any(grepl("cum", df$target))) {
+    pairing <- unique(c(pairing, "target"))
+  }
   col_sel <- !colnames(df_id) %in% c(pairing, "output_type", "output_type_id",
                                      "value", "run_grouping",
                                      "stochastic_run")
@@ -201,14 +209,16 @@ update_df_val_sample <- function(df, max_value = 100000, quantile = FALSE,
                                                  "output_type",
                                                  "output_type_id",
                                                  "age_group", "team_model"),
-                                 peak_target = "inc hosp", age_grp = "0-130") {
+                                 peak_target = "inc hosp", age_grp = "0-130",
+                                 keep_cumul = FALSE) {
   df <- dplyr::mutate(df,
                       output_type_id = as.character(output_type_id),
                       origin_date = as.Date(origin_date))
   df$value <-  sample(seq(0, 100000, by = 0.0001), nrow(df), replace = TRUE)
   if (quantile) df <- make_quantiles(df, quantile_vect = quantile_vect,
                                      quant_group = quant_group,
-                                     cumul_group = cumul_group)
+                                     cumul_group = cumul_group,
+                                     keep_cumul = keep_cumul)
   if (peak) df <- make_peak(df, horizon_max = max(df$horizon, na.rm = TRUE),
                             quantile_vect = quantile_vect, age_grp = age_grp,
                             col_name_id = quant_group,

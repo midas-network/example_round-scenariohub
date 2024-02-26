@@ -57,10 +57,11 @@ lapply(config$rounds[7], function(x) {
       update_df_val_sample(df, quantile = TRUE,
                            quant_group = c("origin_date", "scenario_id",
                                           "location", "target", "horizon",
-                                          "team_model"),
+                                          "team_model", "age_group"),
                            cumul_group = c("origin_date",  "scenario_id",
                                            "location", "target", "output_type",
-                                           "output_type_id", "team_model"))
+                                           "output_type_id", "team_model",
+                                           "age_group"))
   }) %>%
     setNames(unique(req_df$team_model)) %>%
     team_sample_id(def_grp(x), max_sample(x)) %>%
