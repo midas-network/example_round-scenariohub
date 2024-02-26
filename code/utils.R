@@ -118,7 +118,7 @@ prep_sample_information <- function(df, col_update, pairing, rep = 100,
 
   df0 <- dplyr::filter(df, output_type != "sample")
   df_id <- dplyr::filter(df, output_type == "sample")
-  if (any(grepl("inc", df$target)) && any(grepl("cum", df$target))) {
+  if (any(grepl("inc", df_id$target)) && any(grepl("cum", df_id$target))) {
     pairing <- unique(c(pairing, "target"))
   }
   col_sel <- !colnames(df_id) %in% c(pairing, "output_type", "output_type_id",
