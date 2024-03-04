@@ -14,6 +14,7 @@ make_quantiles <- function(df,
                            keep_cumul = FALSE) {
   # cumulative
   if (!is.null(cumul_group)) {
+    print("Calculate cumulative ...")
     calc_cum <- function(df) {
       for (i in 2:length(df$horizon)) {
         df$value_cum[i] <- df$value[i] + df$value_cum[i - 1]
@@ -35,6 +36,7 @@ make_quantiles <- function(df,
     df <- rbind(df, df_cum)
   }
   # quantiles
+  print("Calculate quantiles ...")
   df_quant <- dplyr::reframe(df,
                              value = quantile(value, probs = quantile_vect),
                              output_type = "quantile",
@@ -230,25 +232,30 @@ update_df_val_sample <- function(df, max_value = 100000, quantile = FALSE,
 #  - target_data: should have a column `date`, `location` and `value`
 update_val_obs <- function(df, target_data, start_date = "2020-01-01",
                            end_date = "2023-09-01", target = "inc hosp",
-                           add_col = NULL) {
+                           add_col = NULL, limit_date = NULL) {
   # - Filter to date of interest
   if (!is.null(start_date) && !is.null(end_date))
     target_data <- dplyr::filter(target_data, date < end_date,
                                  date > start_date)
-  proj_st_date <- as.Date(sample(grep("\\d{4}-10|\\d{4}-09",
-                                      unique(target_data$date), value = TRUE),
-                                 1))
+  if (!is.null(limit_date)) {
+    sample_date <- dplyr::filter(target_data, date < limit_date)
+    sample_date <- unique(sample_date$date)
+  } else {
+    sample_date <- unique(sample_date$date)
+  }
+  proj_st_date <- as.Date(sample(grep("\\d{4}-10|\\d{4}-09", sample_date,
+                                      value = TRUE), 1))
   proj_end_date <- proj_st_date + max(df$horizon, na.rm = TRUE) * 7
   # - Filter source date to selected time window and specific target
   obs_data <- dplyr::filter(target_data, date >= proj_st_date,
-                            date <= proj_end_date, target == !!target)
+                            date <= proj_end_date, target %in% !!target)
   # - Create horizon column (with start date = horizon 1) and select columns
   # to merge with example files: location, horizon, age group and value
   obs_data <-
     dplyr::mutate(obs_data,
                   horizon = as.numeric(as.Date(date) - proj_st_date) / 7)
   # Select column of interest
-  sel_col <- c("location", "horizon", "value", add_col)
+  sel_col <- c("location", "horizon", "value", "target", add_col)
   obs_data <- dplyr::select(obs_data, dplyr::all_of(sel_col))
   # - Replace value
   df <- dplyr::mutate(df,
@@ -256,7 +263,8 @@ update_val_obs <- function(df, target_data, start_date = "2020-01-01",
                       origin_date = as.Date(origin_date))
   df_val <- dplyr::left_join(dplyr::select(df, -value), obs_data,
                              by = grep("value", sel_col, invert = TRUE,
-                                       value = TRUE))
+                                       value = TRUE),
+                             relationship = "many-to-one")
   # - As all the scenario have the same value, multiply by small factor for
   # each scenario
   df_val <- lapply(unique(df_val$scenario_id), function(scen) {
