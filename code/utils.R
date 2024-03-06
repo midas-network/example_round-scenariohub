@@ -294,6 +294,7 @@ team_sample_id <- function(all_data, default_pairing, max_sample) {
                                           output_type_id)) %>%
     prep_sample_information("stochastic_run", default_pairing, rep = max_sample)
 
+  gc()
   # Team 2: different parameter sets for each run, runs are not stochastic,
   #   paired on horizon and age group
   all_data$`team2-modelb` <-
@@ -303,7 +304,7 @@ team_sample_id <- function(all_data, default_pairing, max_sample) {
                   output_type_id = ifelse(output_type == "sample", NA,
                                           output_type_id)) %>%
     prep_sample_information("run_grouping", default_pairing, rep = max_sample)
-
+  gc()
   # Team 3: different parameter sets for every stochastic run, paired on horizon
   #  and age group
   all_data$`team3-modelc` <-
@@ -315,7 +316,7 @@ team_sample_id <- function(all_data, default_pairing, max_sample) {
     prep_sample_information("run_grouping", default_pairing,
                             rep = max_sample) %>%
     prep_sample_information("stochastic_run", default_pairing, rep = max_sample)
-
+  gc()
   # Team 4: different parameter sets, replicated in multiple stochastic runs,
   #  paired on horizon and age group
   all_data$`team4-modeld` <-
@@ -327,7 +328,7 @@ team_sample_id <- function(all_data, default_pairing, max_sample) {
     prep_sample_information("run_grouping", default_pairing, rep = max_sample,
                             same_rep = TRUE) %>%
     prep_sample_information("stochastic_run", default_pairing, rep = max_sample)
-
+  gc()
   # Team 5:  paired on horizon and age group and scenario (scenarios are
   # assumed to have the same basic parameters, aside from scenario-specific
   # parameters, but come from different stochastic runs)
@@ -340,13 +341,14 @@ team_sample_id <- function(all_data, default_pairing, max_sample) {
     prep_sample_information("run_grouping", c(default_pairing, "scenario_id"),
                             rep = max_sample, same_rep = TRUE) %>%
     prep_sample_information("stochastic_run", default_pairing, rep = max_sample)
-
+  gc()
   return(all_data)
 }
 
 # Write output file in parquet file
 write_output_parquet <- function(all_data, date_file = NULL, max_size = 1e6,
-                                 folder_dir = "data-processed/") {
+                                 folder_dir = "data-processed/",
+                                 partition = NULL) {
   lapply(all_data, function(df) {
     team_name <- unique(df$team_model)
     folder_name <-  paste0("data-processed/", team_name)
@@ -359,14 +361,23 @@ write_output_parquet <- function(all_data, date_file = NULL, max_size = 1e6,
       filename <- paste0(folder_name, "/", date_file, "-", team_name,
                          ".parquet")
     }
-    arrow::write_parquet(df, filename)
-    if (file.size(filename) / max_size > 60) {
-      file.remove(filename)
-      filename <- paste0(folder_name, "/", unique(df$origin_date), "-",
-                         team_name, ".gz.parquet")
-      arrow::write_parquet(df, filename, compression = "gzip",
-                           compression_level = 9)
+    if (is.null(partition)) {
+      arrow::write_parquet(df, filename)
+      if (file.size(filename) / max_size > 60) {
+        file.remove(filename)
+        filename <- paste0(folder_name, "/", unique(df$origin_date), "-",
+                           team_name, ".gz.parquet")
+        arrow::write_parquet(df, filename, compression = "gzip",
+                             compression_level = 9)
+      }
+    } else {
+      arrow::write_dataset(df, folder_name, partitioning = partition,
+                           hive_style = FALSE, compression = "gzip",
+                           compression_level = 9,
+                           basename_template = paste0(team_name,
+                                                      "{i}.gz.parquet"))
     }
+
   })
 }
 
