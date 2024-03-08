@@ -898,7 +898,7 @@
               "optional": null
             },
              "scenario_id": {
-              "required": ["A-2020-06-05"],
+              "required": ["A-2020-05-01"],
               "optional": null
             },
             "location": {
@@ -910,7 +910,7 @@
                 "optional": null
             },
             "target": {
-              "required": ["inc death", "inc hosp"],
+              "required": ["inc death", "inc case", "inc inf"],
               "optional": null
             },
             "horizon": {
@@ -921,8 +921,8 @@
           "output_type": {
             "sample": {
               "output_type_id": {
-                "min_samples_per_task": 900,
-                "max_samples_per_task": 1000,
+                "min_samples_per_task": 100,
+                "max_samples_per_task": 300,
                 "samples_joint_across": ["horizon", "race_ethnicity"]
               },
               "value" : {
@@ -931,7 +931,7 @@
               }
             }
           },
-          "target_metadata": [
+          "target_metadata":[
             {
               "target_id": "inc death",
               "target_name": "Incident deaths",
@@ -945,13 +945,25 @@
               "time_unit": "week"
             },
             {
-              "target_id": "inc hosp",
-              "target_name": "Incident hospitalizations",
+              "target_id": "inc inf",
+              "target_name": "Incident infection",
+              "target_units": "count",
+              "target_keys": {
+                "target": "inc inf"
+              },
+              "description": "Weekly newly reported infections",
+              "target_type": "discrete",
+              "is_step_ahead": true,
+              "time_unit": "week"
+            },
+            {
+              "target_id": "inc case",
+              "target_name": "Incident cases",
               "target_units": "count",
               "target_keys": {
                 "target": "inc hosp"
               },
-              "description": "Weekly newly reported hospitalizations where the patient has COVID-19, as reported by hospital facilities and aggregated in the HHS Protect data collection system.",
+              "description": "Weekly newly reported cases",
               "target_type": "discrete",
               "is_step_ahead": true,
               "time_unit": "week"
@@ -965,7 +977,7 @@
               "optional": null
             },
              "scenario_id": {
-              "required": ["A-2020-06-05"],
+              "required": ["A-2020-05-01"],
               "optional": null
             },
             "location": {
@@ -977,7 +989,7 @@
                 "optional": null
             },
             "target": {
-              "required": ["inc death", "inc hosp"],
+              "required": ["inc death", "inc inf", "inc case"],
               "optional": null
             },
             "horizon": {
@@ -988,8 +1000,8 @@
           "output_type": {
             "sample": {
               "output_type_id": {
-                "min_samples_per_task": 900,
-                "max_samples_per_task": 1000,
+                "min_samples_per_task": 100,
+                "max_samples_per_task": 300,
                 "samples_joint_across": ["horizon", "race_ethnicity"]
               },
               "value" : {
@@ -1012,13 +1024,25 @@
               "time_unit": "week"
             },
             {
-              "target_id": "inc hosp",
-              "target_name": "Incident hospitalizations",
+              "target_id": "inc inf",
+              "target_name": "Incident infection",
+              "target_units": "count",
+              "target_keys": {
+                "target": "inc inf"
+              },
+              "description": "Weekly newly reported infections",
+              "target_type": "discrete",
+              "is_step_ahead": true,
+              "time_unit": "week"
+            },
+            {
+              "target_id": "inc case",
+              "target_name": "Incident cases",
               "target_units": "count",
               "target_keys": {
                 "target": "inc hosp"
               },
-              "description": "Weekly newly reported hospitalizations where the patient has COVID-19, as reported by hospital facilities and aggregated in the HHS Protect data collection system.",
+              "description": "Weekly newly reported cases",
               "target_type": "discrete",
               "is_step_ahead": true,
               "time_unit": "week"
@@ -1027,8 +1051,8 @@
         }
       ],
       "submissions_due": {
-        "start": "2023-04-17",
-        "end": "2023-05-17"
+        "start": "2023-03-26",
+        "end": "2023-06-26"
       }
     },
 	  {

@@ -35,7 +35,8 @@ all_data <- lapply(unique(req_df$team_model), function(model_id) {
   write_output_parquet()
 
 # EQUITY ROUNDS ------------
-lapply(config$rounds[5:6], function(x) {
+# Phase I
+lapply(config$rounds[5], function(x) {
   req_df <- make_df_sample(x$model_tasks,
                            max_sample =  max_sample(x))
   lapply(unique(req_df$team_model), function(model_id) {
@@ -92,7 +93,7 @@ lapply(config$rounds[7], function(x) {
     gc()
     return(df)
   })
-  df_all %>%
+  list_all <- df_all %>%
     setNames(unique(req_df$team_model)) %>%
     team_sample_id(def_grp(x), max_sample(x)) %>%
     write_output_parquet(partition = c("origin_date", "target"))
