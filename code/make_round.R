@@ -72,12 +72,15 @@ rm(list = grep("obs_data\\d|obs_death|obs_hosp", ls(), value = TRUE))
 lapply(config$rounds[7], function(x) {
   req_df <- make_df_sample(x$model_tasks,
                            max_sample =  max_sample(x))
+  var_n = setNames(seq(0.1, 0.9, by = 0.2), c("team1-modela", "team2-modelb",
+                                              "team3-modelc", "team4-modeld",
+                                              "team5-modele"))
   df_all <- lapply(unique(req_df$team_model), function(model_id) {
     df <- dplyr::filter(req_df, team_model == model_id)
     df <- update_val_obs(df, obs_data, start_date = NULL,
                          end_date = NULL, add_col = "age_group",
                          target = c("inc death", "inc hosp"),
-                         limit_date = "2022-02-15") %>%
+                         limit_date = "2022-02-15", var = var_n[model_id]) %>%
       dplyr::distinct() %>%
       dplyr::mutate(value = ifelse(is.na(value) | value < 0, 0, value))
     df <- dplyr::mutate(df, value = round(value, 3))

@@ -232,7 +232,7 @@ update_df_val_sample <- function(df, max_value = 100000, quantile = FALSE,
 #  - target_data: should have a column `date`, `location` and `value`
 update_val_obs <- function(df, target_data, start_date = "2020-01-01",
                            end_date = "2023-09-01", target = "inc hosp",
-                           add_col = NULL, limit_date = NULL) {
+                           add_col = NULL, limit_date = NULL, var = 0.5) {
   # - Filter to date of interest
   if (!is.null(start_date) && !is.null(end_date))
     target_data <- dplyr::filter(target_data, date < end_date,
@@ -265,17 +265,13 @@ update_val_obs <- function(df, target_data, start_date = "2020-01-01",
                              by = grep("value", sel_col, invert = TRUE,
                                        value = TRUE),
                              relationship = "many-to-one")
-  # - As all the scenario have the same value, multiply by small factor for
-  # each scenario
-  df_val <- lapply(unique(df_val$scenario_id), function(scen) {
-    multi <- sample(seq(1, 1.1, by = 0.01), 1)
-    df_val %>%
-      dplyr::filter(scenario_id == scen) %>%
-      dplyr::mutate(value = ((value + horizon + as.numeric(output_type_id)) *
-                               multi))
-  }) %>%
-    dplyr::bind_rows()
-  # return output
+  # - As all the group have the same value, multiply by small factor (var)
+  # for each value
+  df_val <- df_val %>%
+    dplyr::mutate(value = ((value + horizon) +
+                             ((value + as.numeric(output_type_id)) *
+                                sample(seq(-var, var, by = 0.01), nrow(.),
+                                       replace = TRUE))))
   return(df_val)
 }
 
