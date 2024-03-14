@@ -108,7 +108,7 @@ lapply(list_team, function(x) {
                          partitioning = c("origin_date", "target"),
                          hive_style = FALSE, compression = "gzip",
                          compression_level = 9,
-                         basename_template = paste0(team_name,
+                         basename_template = paste0(x,
                                                     "{i}.gz.parquet"))
     #SMHvalidation::validate_submission(
     #  write_path, js_def = "hub-config/tasks.json", lst_gs = NULL,
