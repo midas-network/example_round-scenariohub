@@ -698,8 +698,8 @@ calculate_peak_time <- function(
                         drop = TRUE)
       peak_time <- lapply(lst_time, function(dft) {
         df_epitime <- NULL
-        if (nrow(dft) != 100) {
-          print("No. Peaks != 100")
+        if (nrow(dft) != 300) {
+          print("No. Peaks != 300")
           print(head(dft))
           print(nrow(dft))
         }
