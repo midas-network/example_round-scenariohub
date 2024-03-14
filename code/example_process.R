@@ -48,10 +48,6 @@ source("code/utils.R")
 source("code/temp_calc_ens.R")
 
 # Add missing value ------
-write <- TRUE
-check <- TRUE
-team_file <- "2024-04-28-team1-modela.parquet"
-
 list_team <- grep("README", dir("data-processed/"), value = TRUE, invert = TRUE)
 lapply(list_team, function(x) {
   a_time <- system.time({
@@ -94,14 +90,14 @@ lapply(list_team, function(x) {
     # Time
     peak_time_target <- grep("peak time", all_target, value = TRUE)
     df_all <- calculate_peak_time(
-      df_team, df_all, team_model, peak_group = peak_group,
+      df_team, df_all, x, peak_group = peak_group,
       peak_time_target = peak_time_target)
 
 
     # Peak size
     peak_size_target <- grep("peak size", all_target, value = TRUE)
     df_all <- calculate_peak_size(
-      df_team, df_all, team_model, peak_size_target = peak_size_target,
+      df_team, df_all, x, peak_size_target = peak_size_target,
       peak_group = peak_group, quantile_vect = quantile_vect)
 
     # Standardization

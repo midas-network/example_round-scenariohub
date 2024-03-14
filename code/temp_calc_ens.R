@@ -497,3 +497,313 @@ write_ensemble <- function(df_ensemble, path_model, ens_name = "Ensemble",
     write_files(df, name_file, ext = ext)
   })
 }
+# Functions --------------------------------------------------------------------
+
+#' Calculate the epiweek in "EWYYYWW" format
+#'
+#' For a specific date or a vector of date, calculate the epiweek in a
+#' "EWYYYYWW" format
+#'
+#' @param date date or vector of date to transform
+#'
+#' @export
+#' @importFrom MMWRweek MMWRweek
+make_epiweek <- function(date) {
+  epi_date <- MMWRweek::MMWRweek(date)
+  epi_year <- epi_date[["MMWRyear"]]
+  epi_week <- as.character(epi_date[["MMWRweek"]])
+  epi_week <- ifelse(nchar(epi_week) < 2, paste0(0, epi_week), epi_week)
+  epi_info <- paste0("EW", epi_year, epi_week)
+  return(epi_info)
+}
+
+#' Calculate missing optional target value
+#'
+#' For rounds with samples output_type, the cumulative trajectories are not
+#' expected and the quantiles are also not expected. This function test for
+#' weekly incident and cumulative target if all the possible values
+#' are presents and if not generate them for a specific team_model projection
+#'
+#' @param df_team model projection of a team-model
+#' @param weekly_targ_name vector of weekly incident, cummulative target name
+#' @param team_model name of the team-model
+#' @param cumul_group character vector of column names to 'group_by' the
+#' input data frame to calculate the cumulatives trajectories for each group
+#' @param quant_group character vector of column names to 'group_by' the input
+#' data frame to calculate the quantiles for each group
+#' @param quantile_vect numeric vector of probabilities with values in [0,1],
+#' to produce quantiles corresponding to the given probabilities
+#'
+#' @details
+#' ## Weekly incident and cumulative target ---
+#'  For each target (hosp or death), check that both sample and
+#'  quantiles information are available:
+#'  1. if sample target(s) is missing:
+#'    - if cumulative is missing: calculates from incident trajectories
+#'    - if incident: returns a warning message and doesn't calculate cumulative
+#'      sample and quantiles
+#'  2. if quantiles target(s) is missing:
+#'    - calculates missing quantiles from associated trajectories
+#'  3. aggregate all
+#'
+#' @importFrom ScenarioModelingHub.data path_file make_quantiles
+#' @importFrom dplyr filter bind_rows
+calculate_inccum_weekly <- function(
+    df_team, weekly_targ_name, team_model,
+    cumul_group = c("origin_date", "scenario_id", "location", "target",
+                    "output_type", "output_type_id", "age_group"),
+    quant_group = c("origin_date", "scenario_id", "location", "target",
+                    "horizon", "age_group"),
+    quantile_vect = c(0.01, 0.025, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4,
+                      0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9,
+                      0.95, 0.975, 0.99)) {
+
+  lst_all <- lapply(weekly_targ_name, function(targ) {
+    df_targ <- dplyr::filter(df_team, grepl(paste0("(inc|cum) ", targ), target))
+    # Test sample first
+    df_targ_sample <- dplyr::filter(df_targ, output_type == "sample")
+    if (nrow(df_targ_sample) < 1) {
+      warning("The submission file from: ", team_model,
+              " is missing sample for the target: ", targ,
+              ". The missing values cannot be calculated.")
+      return(df_targ)
+    } else {
+      if (!any(grepl("cum ", df_targ_sample$target))) {
+        message("The submission file from: ", team_model,
+                " is missing cumulative sample the target: ", targ,
+                ". The missing value will be calculated.")
+        # Calculate cumulative
+        # - Sample
+        inc_sample_targ <- dplyr::filter(df_targ_sample,
+                                         target == paste0("inc ", targ))
+        df_targ_sample <- ScenarioModelingHub.Data::make_quantiles(
+          inc_sample_targ, quant_group = NULL, quantile_vect = NULL,
+          cumul_group = cumul_group)
+      }
+    }
+    # Test quantile
+    df_targ_quantile <- dplyr::filter(df_targ, output_type == "quantile")
+    if (nrow(df_targ_quantile) < 1) {
+      message("The submission file from: ", team_model,
+              " is missing all quantiles for the target: ", targ,
+              ". The missing value will be calculated.")
+      df_all_targ <- ScenarioModelingHub.Data::make_quantiles(
+        df_targ_sample, quant_group = quant_group,
+        quantile_vect = quantile_vect, cumul_group = NULL)
+    } else {
+      if (any(grepl("cum", df_targ_quantile$target)) &
+          any(grepl("inc", df_targ_quantile$target))) {
+        message("The submission file from: ", team_model, " contains all the ",
+                "quantiles for the target: ", targ)
+        df_all_targ <- rbind(df_targ_quantile, df_targ_sample)
+      } else {
+        inc_sample_targ <- dplyr::filter(df_targ_sample,
+                                         target == paste0("inc ", targ))
+        cum_sample_targ <- dplyr::filter(df_targ_sample,
+                                         target == paste0("cum ", targ))
+        # Incidence
+        if (!any(grepl("inc", df_targ_quantile$target))) {
+          message("The submission file from: ", team_model,
+                  " is missing incident quantiles for the target: ", targ,
+                  ". The missing value will be calculated.")
+          df_targ_inc <- ScenarioModelingHub.Data::make_quantiles(
+            inc_sample_targ, quant_group = quant_group,
+            quantile_vect = quantile_vect, cumul_group = NULL)
+        } else {
+          df_targ_inc <- rbind(inc_sample_targ,
+                               dplyr::filter(df_targ_quantile,
+                                             target == paste0("inc ", targ)))
+        }
+        # Cumulative
+        if (!any(grepl("cum", df_targ_quantile$target))) {
+          message("The submission file from: ", team_model,
+                  " is missing cumulative quantiles for the target: ", targ,
+                  ". The missing value will be calculated.")
+          df_targ_cum <- ScenarioModelingHub.Data::make_quantiles(
+            cum_sample_targ,
+            quant_group = c("origin_date", "scenario_id", "location", "target",
+                            "horizon", "age_group"),
+            quantile_vect = quantile_vect, cumul_group = NULL)
+        } else {
+          df_targ_cum <- rbind(cum_sample_targ,
+                               dplyr::filter(df_targ_quantile,
+                                             target == paste0("cum ", targ)))
+        }
+        df_all_targ <- rbind(df_targ_cum, df_targ_inc)
+      }
+    }
+    return(df_all_targ)
+  })
+  df_all <- dplyr::bind_rows(lst_all)
+  return(df_all)
+}
+
+#' Calculate missing peak time
+#'
+#' For rounds with samples output_type, the peak time hosp target is optional.
+#' This function test for if peak time hosp is present in a specific team_model
+#' submission and if not generate them
+#'
+#' @param df_team model projection of a team-model (as submitted)
+#' @param df_all model projection of a team-model (with samples and quantiles)
+#' to append the results, NULL for no data to append
+#' @param team_model name of the team-model
+#' @param peak_time_target target name as in the submission file
+#' @param peak_group character vector of column names to 'group_by' the input
+#' data frame to calculate the peak time hospitalization target for each group
+#'
+#' @details
+#' Generates missing target from incident hospitalization trajectories by
+#' calculating cumulative probability of peak across the complete time series.
+#' For each trajectories, the horizon of the maximum incident hospitalization
+#' is extracted.
+#' For each horizon: calculate the average of how many trajectories have peaked
+#' on this week (for example: 45 trajectories on 100 trajectories have peaked on
+#' horizon 4) (probability of peak).
+#' Calculate the cumulative probability of peak across trajectories:
+#' following previous example cumulative on horizon 4 = (45/100 + cumulative
+#' probability on horizon 3)
+#'
+#' @importFrom dplyr filter group_by across all_of mutate ungroup bind_rows
+calculate_peak_time <- function(
+    df_team, df_all, team_model, peak_time_target = "peak time hosp",
+    peak_group = c("origin_date", "scenario_id", "location", "target",
+                   "age_group", "output_type_id")) {
+
+  df_time_target <- dplyr::filter(df_team, target == peak_time_target)
+  if (nrow(df_time_target) < 1) {
+    df_inc_sample <- dplyr::filter(df_team, output_type == "sample",
+                                   target == "inc hosp", age_group == "0-130") %>%
+      dplyr::mutate(output_type_id = as.numeric(output_type_id),
+                    origin_date = as.Date(origin_date))
+    if (nrow(df_inc_sample) < 1) {
+      warning("Missing inc hosp sample to calculate peak time hosp.")
+      df_all <- df_all
+    } else {
+      message("The submission file from: ", team_model,
+              " is missing value for the target: ", peak_time_target,
+              ". The missing value will be calculated.")
+
+      df_time <- dplyr::group_by(df_inc_sample, across(all_of(peak_group))) %>%
+        mutate(sel = ifelse(max(value) == value, horizon, NA)) %>%
+        mutate(sel2 = ifelse(all(value == max(value)), 0, 1)) %>%
+        filter(sel2 != 0) %>%
+        filter(!is.na(sel)) %>% arrange(horizon) %>%
+        mutate(sel3 = ifelse(duplicated(output_type_id), 0, 1)) %>%
+        filter(sel3 == 1) %>% select(-contains("sel")) %>%
+        ungroup()
+
+      lst_time <- split(df_time, list(df_time$scenario_id, df_time$location,
+                                      df_time$age_group, df_time$target),
+                        drop = TRUE)
+      peak_time <- lapply(lst_time, function(dft) {
+        df_epitime <- NULL
+        if (nrow(dft) != 100) {
+          print("No. Peaks != 100")
+          print(head(dft))
+          print(nrow(dft))
+        }
+        for (i in 1:max(df_inc_sample$horizon, na.rm = TRUE)) {
+          peak_prob = nrow(dplyr::filter(dft, horizon == i)) / nrow(dft)
+          if (!is.null(df_epitime)) {
+            peak_cum <- filter(df_epitime, horizon == i - 1) %>% .$value
+            peak_cum <- peak_cum + peak_prob
+          }   else {
+            peak_cum <- peak_prob
+          }
+          if (peak_cum >= 1) peak_cum <- 1
+          date <- MMWRweek::MMWRweek(
+            unique(dft$origin_date) + (i * 7) - 1)
+          if (nchar(date$MMWRweek) < 2) {
+            date <- paste0("EW", date$MMWRyear, "0", date$MMWRweek)
+          } else {
+            date <- paste0("EW", date$MMWRyear, date$MMWRweek)
+          }
+          df_epi <- distinct(
+            dft[, grep("output_type", peak_group, value = TRUE,
+                       invert = TRUE)]) %>%
+            mutate(horizon = i,
+                   output_type = "cdf",
+                   output_type_id = date,
+                   value = peak_cum,
+                   target = peak_time_target)
+          df_epitime <- rbind(df_epi, df_epitime)
+        }
+        df_epitime$horizon <- NA
+        return(df_epitime)
+      }) %>% bind_rows()
+      df_all <- dplyr::mutate(df_all, origin_date = as.Date(origin_date))
+      df_all <- rbind(df_all, peak_time)
+    }
+  } else {
+    message("The submission file from: ", team_model,
+            " contains value for the target: ", peak_time_target)
+    df_all <- rbind(df_all, df_time_target)
+  }
+  return(df_all)
+}
+
+
+#' Calculate missing peak size
+#'
+#' For rounds with samples output_type, the peak size hosp target is optional.
+#' This function test for if peak size hosp is present in a specific team_model
+#' submission and if not generate them
+#'
+#' @param df_team model projection of a team-model (as submitted)
+#' @param df_all model projection of a team-model (with samples and quantiles)
+#' to append the results, NULL for no data to append
+#' @param team_model name of the team-model
+#' @param peak_size_target target name as in the submission file
+#' @param peak_group character vector of column names to 'group_by' the input
+#' data frame to calculate the peak size hospitalization target for each group
+#' @param quantile_vect numeric vector of probabilities with values in [0,1],
+#' to produce quantiles corresponding to the given probabilities
+#'
+#' @details
+#' Generates missing target from incident hospitalization trajectories by
+#' extracting the max incident hospitalization value for each trajectories and
+#' then generates the quantiles distribution of the max valua across all
+#' trajectories.
+#'
+#' @importFrom dplyr filter group_by across all_of mutate ungroup bind_rows
+calculate_peak_size <- function(
+    df_team, df_all, team_model, peak_size_target = "peak size hosp",
+    peak_group = c("origin_date", "scenario_id", "location", "target",
+                   "age_group", "output_type_id"),
+    quantile_vect = c(0.01, 0.025, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4,
+                      0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9,
+                      0.95, 0.975, 0.99)) {
+
+  df_size_target <- dplyr::filter(df_team, target == peak_size_target)
+  if (nrow(df_size_target) < 1) {
+    df_inc_sample <- dplyr::filter(df_team, output_type == "sample",
+                                   target == "inc hosp", age_group == "0-130")
+    if (nrow(df_inc_sample) < 1) {
+      warning("Missing inc hosp sample to calculate peak size hosp.")
+      df_all <- df_all
+    } else {
+      message("The submission file from: ", team_model,
+              " is missing value for the target: ", peak_size_target,
+              ". The missing value will be calculated.")
+      df_size <- dplyr::group_by(df_inc_sample, across(all_of(peak_group))) %>%
+        dplyr::summarise(max = max(value)) %>%
+        dplyr::ungroup() %>%
+        reframe(
+          value = quantile(max, quantile_vect),
+          output_type = "quantile",
+          output_type_id = quantile_vect,
+          .by = all_of(grep("output_type", peak_group, value = TRUE,
+                            invert = TRUE))) %>%
+        mutate(horizon = NA,
+               target = peak_size_target)
+    }
+    df_all <- rbind(df_all, df_size)
+  } else {
+    message("The submission file from: ", team_model,
+            " contains value for the target: ", peak_size_target)
+    df_all <- rbind(df_all, df_size_target)
+  }
+
+  return(df_all)
+}
