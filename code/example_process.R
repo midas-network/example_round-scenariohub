@@ -78,11 +78,11 @@ lapply(list_team, function(x) {
     df_all <-
       make_quantiles(df_team,
                      quant_group = c("origin_date", "scenario_id", "location",
-                                     "target", "horizon", "team_model",
+                                     "target", "horizon",
                                      "age_group"),
                      cumul_group = c("origin_date",  "scenario_id",
                                      "location", "target", "output_type",
-                                     "output_type_id", "team_model",
+                                     "output_type_id",
                                       "age_group"),
                      keep_cumul = TRUE)
 
