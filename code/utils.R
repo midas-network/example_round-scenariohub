@@ -420,3 +420,67 @@ new_age_group <- function(df, agg_age_groups, new_age_group, fct = "sum",
     dplyr::ungroup()
   return(dplyr::bind_rows(df, new_ag))
 }
+
+
+#' Adapt peak target information for ensemble calculation
+#'
+#' Re-frame the input data frame and generate missing variable in the expected
+#' format to be able to calculate LOP ensembles on peak targets.
+#'
+#' @param path_model path to the folder containing the submission files to use
+#'  to calculate the peak ensemble
+#' @param round_path path to a csv with round information (date, scenario, etc.)
+#' @param round_number numeric, internal round number used to identify the round
+#' @param excl_model character string, regex of team-model name to exclude from
+#' the file, if NULL no exclusion
+#' @param list_quantiles numeric vector of probabilities with values in [0,1],
+#' to select quantiles of interest in the submission files (peak size only)
+#'
+#' @importFrom ScenarioModelingHub.data path_files read_files
+#' @importFrom dplyr mutate filter arrange bind_rows
+#' @importFrom MMWRweek MMWRweek2Date
+peak_prep <- function(path_model, round_number, round_path, excl_model,
+                      list_quantiles) {
+  # List of files to read per round
+  name_peak <- path_files(path_model, ensemble = FALSE,
+                          round_path = round_path, round = round_number)
+  # Files exclusion if necessary
+  if (!is.null(excl_model)) {
+    name_peak <- grep(excl_model, name_peak, value = TRUE, invert = TRUE)
+  }
+  # Re-Frame data and calculate missing variable
+  df_peak <- lapply(name_peak, function(x) {
+    df <- read_files(x) %>%
+      dplyr::mutate(origin_date = as.Date(origin_date))
+    # Peak time
+    df_time <- dplyr::filter(df, grepl("peak time", target)) %>%
+      dplyr::mutate(
+        quantile = value,
+        target_end_date = MMWRweek::MMWRweek2Date(
+          as.numeric(substr(gsub("EW", "", output_type_id), 1, 4)),
+          as.numeric(substr(gsub("EW", "", output_type_id), 5, 6)), 7
+        ),
+        value = as.numeric(MMWRweek::MMWRweek2Date(
+          as.numeric(substr(gsub("EW", "", output_type_id), 1, 4)),
+          as.numeric(substr(gsub("EW", "", output_type_id), 5, 6)), 7
+        ))) %>%
+      dplyr::arrange(target_end_date)
+    # Peak size
+    df_size <- dplyr::filter(df, grepl("peak size", target),
+                             !is.na(output_type_id)) %>%
+      dplyr::arrange(output_type_id) %>%
+      dplyr::filter(output_type_id %in% list_quantiles) %>%
+      dplyr::mutate(quantile = output_type_id,
+                    target_end_date = as.Date(NA))
+    # All
+    df_tot <- rbind(df_time, df_size) %>%
+      dplyr::mutate(
+        model_name = gsub(".{4}-.{2}-.{2}-|.csv|.zip|.gz|.pqt|.parquet", "",
+                          basename(x)),
+        location = as.character(
+          ifelse(nchar(location) == 1, paste0("0", location), location)))
+    return(df_tot)
+  }) %>%
+    dplyr::bind_rows()
+  return(df_peak)
+}
