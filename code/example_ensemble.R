@@ -142,18 +142,28 @@ weight.df = data.frame(
   model_name = unique(df$model_name),
   weight = 1)
 
-system.time({
-  df$output_type_id <- as.numeric(df$output_type_id)
+df$output_type_id <- as.numeric(df$output_type_id)
+time_ens <- system.time({
   ens <- calculate_ensemble(df, ens_func, ens_group = ens_group,
                             weight.df = weight.df)
+})
+print("Time Ensemble:")
+print(time_ens)
+time_ens_lop <- system.time({
   df_lop <- ensemble_lop(df, list_quantiles,
                          weights = weight.df,
                          weighting_scheme = "cdf_exterior",
                          n_trim = 2, ens_group = ens_group)
+})
+print("Time Ensemble LOP:")
+print(time_ens_lop)
+time_ens_lop_un <- system.time({
   df_unlop <- ensemble_lop(df, list_quantiles, weights = weight.df,
                            weighting_scheme = "user_defined",
                            n_trim = NA, ens_group = ens_group)
 })
+print("Time Ensemble LOP untrimmed:")
+print(time_ens_lop_un)
 print(paste0("Process quantile ensemble stop:", Sys.time()))
 
 # Peak ensembe
@@ -166,8 +176,7 @@ df <- arrow::open_dataset("data-processed/",
                           schema = schema) %>%
   dplyr::filter(origin_date == "2024-04-28", grepl("peak", target)) %>%
   dplyr::collect() %>%
-  dplyr::select(-run_grouping, -stochastic_run) %>%
-  dplyr::mutate(origin_date = as.Date(origin_date))
+  dplyr::select(-run_grouping, -stochastic_run)
 
 # Peak time
 df_time <- dplyr::filter(df, grepl("peak time", target)) %>%
@@ -198,7 +207,7 @@ df_unlop_peak <- peak_ensemble(df_peak, weighting_scheme = "user_defined",
                                n_trim = NA, weight.df = weight.df,
                                ens_group = ens_group)
 
-print(paste0("Process peak ensemle stop:", Sys.time()))
+print(paste0("Process peak ensemble stop:", Sys.time()))
 
 # Write output
 if (!dir.exists("data-processed/Ensemble/"))

@@ -51,6 +51,7 @@ source("code/temp_calc_ens.R")
 list_team <- grep("README", dir("data-processed/"), value = TRUE, invert = TRUE)
 lapply(list_team, function(x) {
   a_time <- system.time({
+    print("###########")
     test <-
       arrow::open_dataset("data-processed/",
                           partitioning = c("model_name", "origin_date",
@@ -114,7 +115,6 @@ lapply(list_team, function(x) {
     #  write_path, js_def = "hub-config/tasks.json", lst_gs = NULL,
     #  pop_path = "data-locations/locations.csv")
   })
-  print("###########")
   print(x)
   print(a_time)
   NULL
