@@ -243,36 +243,42 @@ update_val_obs <- function(df, target_data, start_date = "2020-01-01",
   } else {
     sample_date <- unique(sample_date$date)
   }
-  proj_st_date <- as.Date(sample(grep("\\d{4}-10|\\d{4}-09", sample_date,
-                                      value = TRUE), 1))
-  proj_end_date <- proj_st_date + max(df$horizon, na.rm = TRUE) * 7
-  # - Filter source date to selected time window and specific target
-  obs_data <- dplyr::filter(target_data, date >= proj_st_date,
-                            date <= proj_end_date, target %in% !!target)
-  # - Create horizon column (with start date = horizon 1) and select columns
-  # to merge with example files: location, horizon, age group and value
-  obs_data <-
-    dplyr::mutate(obs_data,
-                  horizon = as.numeric(as.Date(date) - proj_st_date) / 7)
-  # Select column of interest
-  sel_col <- c("location", "horizon", "value", "target", add_col)
-  obs_data <- dplyr::select(obs_data, dplyr::all_of(sel_col))
-  # - Replace value
-  df <- dplyr::mutate(df,
-                      output_type_id = as.character(output_type_id),
-                      origin_date = as.Date(origin_date))
-  df_val <- dplyr::left_join(dplyr::select(df, -value), obs_data,
-                             by = grep("value", sel_col, invert = TRUE,
-                                       value = TRUE),
-                             relationship = "many-to-one")
-  # - As all the group have the same value, multiply by small factor (var)
-  # for each value
-  df_val <- df_val %>%
-    dplyr::mutate(value = ((value + horizon) +
-                             ((value + as.numeric(output_type_id)) *
-                                sample(seq(-var, var, by = 0.01), nrow(.),
-                                       replace = TRUE))))
-  return(df_val)
+  lst_val <- lapply(unique(df$scenario_id), function(scen) {
+    proj_st_date <- as.Date(sample(grep("\\d{4}-10|\\d{4}-09", sample_date,
+                                        value = TRUE), 1))
+    proj_end_date <- proj_st_date + max(df$horizon, na.rm = TRUE) * 7
+    # - Filter source date to selected time window and specific target
+    obs_data <- dplyr::filter(target_data, date >= proj_st_date,
+                              date <= proj_end_date, target %in% !!target)
+    # - Create horizon column (with start date = horizon 1) and select columns
+    # to merge with example files: location, horizon, age group and value
+    obs_data <-
+      dplyr::mutate(obs_data,
+                    horizon = as.numeric(as.Date(date) - proj_st_date) / 7)
+    # Select column of interest
+    sel_col <- c("location", "horizon", "value", "target", add_col)
+    obs_data <- dplyr::select(obs_data, dplyr::all_of(sel_col))
+    # - Replace value
+    df_v <- dplyr::mutate(df,
+                          output_type_id = as.character(output_type_id),
+                          origin_date = as.Date(origin_date)) %>%
+      dplyr::select(-value) %>%
+      dplyr::filter(scenario_id == scen)
+    df_val <- dplyr::left_join(df_v, obs_data,
+                               by = grep("value", sel_col, invert = TRUE,
+                                         value = TRUE),
+                               relationship = "many-to-one")
+    # - As all the group have the same value, multiply by small factor (var)
+    # for each value
+    df_val <- df_val %>%
+      dplyr::mutate(value = ((value + horizon) +
+                               ((value + as.numeric(output_type_id)) *
+                                  sample(seq(-var, var, by = 0.01), nrow(.),
+                                         replace = TRUE))))
+    return(df_val)
+  })
+  df_tot <- dplyr::bind_rows(lst_val)
+  return(df_tot)
 }
 
 
