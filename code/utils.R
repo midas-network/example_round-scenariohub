@@ -354,7 +354,8 @@ write_output_parquet <- function(all_data, date_file = NULL, max_size = 1e6,
   lapply(all_data, function(df) {
     team_name <- unique(df$team_model)
     folder_name <-  paste0("data-processed/", team_name)
-    df <-  dplyr::select(df, -team_model)
+    df <-  dplyr::select(df, -team_model) %>%
+      dplyr::mutate(value = round(value, 3))
     if (!dir.exists(folder_name)) dir.create(folder_name)
     if (is.null(date_file)) {
       filename <- paste0(folder_name, "/", unique(df$origin_date), "-",

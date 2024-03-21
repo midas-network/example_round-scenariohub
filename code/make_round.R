@@ -81,9 +81,22 @@ lapply(config$rounds[7], function(x) {
                          end_date = NULL, add_col = "age_group",
                          target = c("inc death", "inc hosp"),
                          limit_date = "2022-02-15", var = var_n[model_id]) %>%
-      dplyr::distinct() %>%
-      dplyr::mutate(value = ifelse(is.na(value) | value < 0, 0, value))
-    df <- dplyr::mutate(df, value = round(value, 3))
+      dplyr::distinct()
+    if (model_id == "team5-modele") {
+      df <- lapply(unique(df$age_group), function(age) {
+        df_age <- dplyr::filter(df, age_group == age)
+        if (age != "0-130") {
+          df_age <- dplyr::mutate(df_age,
+                                  value = value +
+                                    (value * sample(seq(-0.9, 0.9, by = 0.01),
+                                                    nrow(df_age),
+                                                    replace = TRUE)))
+        }
+        return(df_age)
+      }) %>%
+        dplyr::bind_rows()
+    }
+    df <- dplyr::mutate(df, value = ifelse(is.na(value) | value < 0, 0, value))
     df <- make_quantiles(df,
                          quant_group = c("origin_date", "scenario_id",
                                          "location", "target", "horizon",
