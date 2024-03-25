@@ -160,7 +160,7 @@ lapply(config$rounds[7], function(x) {
                          partitioning = c("origin_date", "target"),
                          hive_style = FALSE, compression = "gzip",
                          compression_level = 9,
-                         basename_template = paste0(team_name,
+                         basename_template = paste0(model_id,
                                                     "{i}.gz.parquet"))
 
     return(NULL)
