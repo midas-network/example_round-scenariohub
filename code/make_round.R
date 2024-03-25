@@ -74,7 +74,10 @@ lapply(config$rounds[7], function(x) {
   default_pairing <- def_grp(x)
   max_sample <- max_sample(x)
   lapply(teams, function(model_id) {
+    # Print team information
+    print(paste0("Generate example data for: ", model_id))
     # Prepare value
+    print("-- Generate value")
     df <- dplyr::select(req_df, -team_model)
     if (model_id %in% c("team1-modela", "team2-modelb")) {
       df <- update_df_val_sample(df, max_value = 1e+07, quantile = TRUE,
@@ -114,6 +117,7 @@ lapply(config$rounds[7], function(x) {
                            keep_cumul = FALSE)
     }
     # Prepare output type ID information
+    print("-- Generate sample ID")
     df <- dplyr::mutate(df, value = round(value, 1),
                         run_grouping = ifelse(output_type == "sample", 1, NA),
                         stochastic_run = ifelse(output_type == "sample", 1, NA),
@@ -148,12 +152,13 @@ lapply(config$rounds[7], function(x) {
     }
     gc()
     # Write output
+    print("-- Write output")
     folder_name <-  paste0("data-processed/", model_id, "/")
     if (model_id %in% c("team1-modela", "team6-modelf",
                         "team7-modelg", "team8-modelh", "team10-modelj")) {
       df$value <- round(df$value, 1)
     } else {
-      df$value <- as.integer(value)
+      df$value <- as.integer(df$value)
     }
     if (!dir.exists(folder_name)) dir.create(folder_name)
     arrow::write_dataset(df, folder_name,
