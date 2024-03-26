@@ -126,7 +126,7 @@ source("code/temp_calc_ens.R")
 # Calculate Ensemble ------
 message("# Quantile ensemble")
 print(paste0("Process quantile ensemble start:", Sys.time()))
-df <- arrow::open_dataset("data-processed/",
+df <- arrow::open_dataset("output-processed/",
                           partitioning = c("model_name", "origin_date",
                                            "target"),
                           factory_options = list(exclude_invalid_files = TRUE),

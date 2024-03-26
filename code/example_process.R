@@ -94,7 +94,6 @@ lapply(list_team, function(x) {
       df_team, df_all, x, peak_group = peak_group,
       peak_time_target = peak_time_target)
 
-
     # Peak size
     peak_size_target <- grep("peak size", all_target, value = TRUE)
     df_all <- calculate_peak_size(
@@ -104,74 +103,21 @@ lapply(list_team, function(x) {
     # Standardization
     df_all <- dplyr::mutate(df_all, origin_date = as.Date(origin_date))
 
-    # Write and check output with SMHvalidation package
-    arrow::write_dataset(df_all, paste0("data-processed/", x, "/"),
+    # Write and check output with 'SMHvalidation' package
+    write_path <- paste0("output-processed/", x, "/")
+    if (!dir.exists(write_path)) dir.create(write_path, recursive = TRUE)
+    arrow::write_dataset(df_all, write_path,
                          partitioning = c("origin_date", "target"),
                          hive_style = FALSE, compression = "gzip",
                          compression_level = 9,
                          basename_template = paste0(x,
                                                     "{i}.gz.parquet"))
-    #SMHvalidation::validate_submission(
-    #  write_path, js_def = "hub-config/tasks.json", lst_gs = NULL,
-    #  pop_path = "data-locations/locations.csv")
+    SMHvalidation::validate_submission(
+      write_path, js_def = "hub-config/tasks.json", lst_gs = NULL,
+      pop_path = "data-locations/locations.csv", merge_sample_col = TRUE,
+      partition = c("origin_date", "target"), n_decimal = 1)
   })
   print(x)
   print(a_time)
   NULL
 })
-
-
-# Calculate Ensemble ------
-df <- arrow::open_dataset("data-processed/",
-                          partitioning = c("model_name", "origin_date",
-                                           "target"),
-                          factory_options = list(exclude_invalid_files = TRUE),
-                          schema = schema) %>%
-  dplyr::filter(origin_date == "2024-04-28", output_type == "quantile") %>%
-  dplyr::collect() %>%
-  dplyr::select(-run_grouping, -stochastic_run)
-
-ens_func = function(x, y) {
-  matrixStats::weightedMedian(x, w = y, na.rm = TRUE) }
-
-weight.df = data.frame(
-  model_name = unique(df$model_name),
-  weight = 1)
-
-Sys.time()
-system.time({
-  df_tot$output_type_id <- as.numeric(df$output_type_id)
-  ens <- calculate_ensemble(df, ens_func, ens_group = ens_group,
-                            weight.df = weight.df)
-  if (!dir.exists("data-processed/Ensemble/"))
-    dir.create("data-processed/Ensemble/")
-  arrow::write_dataset(ens, paste0("data-processed/Ensemble/"),
-                       partitioning = c("origin_date", "target"),
-                       hive_style = FALSE, compression = "gzip",
-                       compression_level = 9,
-                       basename_template = "Ensemble{i}.gz.parquet")
-  df_lop <- ensemble_lop(df, list_quantiles,
-                         weights = weight.df,
-                         weighting_scheme = "cdf_exterior",
-                         n_trim = 2, ens_group = ens_group)
-  if (!dir.exists("data-processed/Ensemble_LOP/"))
-    dir.create("data-processed/Ensemble_LOP/")
-  arrow::write_dataset(df_lop, paste0("data-processed/Ensemble_LOP/"),
-                       partitioning = c("origin_date", "target"),
-                       hive_style = FALSE, compression = "gzip",
-                       compression_level = 9,
-                       basename_template = "Ensemble_LOP{i}.gz.parquet")
-  df_unlop <- ensemble_lop(df, list_quantiles, weights = weight.df,
-                           weighting_scheme = "user_defined",
-                           n_trim = NA, ens_group = ens_group)
-  if (!dir.exists("data-processed/Ensemble_LOP_untrimmed/"))
-    dir.create("data-processed/Ensemble_LOP_untrimmed/")
-  arrow::write_dataset(df_unlop,
-                       paste0("data-processed/Ensemble_LOP_untrimmed/"),
-                       partitioning = c("origin_date", "target"),
-                       hive_style = FALSE, compression = "gzip",
-                       compression_level = 9,
-                       basename_template = "Ensemble_LOP_untrimmed{i}.gz.parquet")
-})
-Sys.time()
-
