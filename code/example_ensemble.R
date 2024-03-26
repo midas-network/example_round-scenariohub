@@ -142,10 +142,28 @@ weight.df = data.frame(
   model_name = unique(df$model_name),
   weight = 1)
 
+weight.df_hv = data.frame(
+  model_id = unique(df$model_name),
+  weight = 1)
+
 df$output_type_id <- as.numeric(df$output_type_id)
 time_ens <- system.time({
   ens <- calculate_ensemble(df, ens_func, ens_group = ens_group,
                             weight.df = weight.df)
+  df_hv <- rename(df, model_id = model_name)
+  df_hv <- hubData::as_model_out_tbl(df_hv)
+  ens_hv <- hubEnsembles::simple_ensemble(df_hv, weight.df_hv,
+                                          agg_fun = "median")
+  div <- dplyr::setdiff(ens, dplyr::select(ens_hv, -model_id))
+  div2 <- dplyr::setdiff(dplyr::select(ens_hv, -model_id), ens)
+  if (nrow(div) > 0) {
+    warning("Difference between SMH and Hubverse process")
+    print(Head(div))
+  }
+  if (nrow(div) > 0) {
+    warning("Difference between Hubverse amd SMH process")
+    print(head(div2))
+  }
 })
 print("Time Ensemble:")
 print(time_ens)
@@ -154,6 +172,8 @@ time_ens_lop <- system.time({
                          weights = weight.df,
                          weighting_scheme = "cdf_exterior",
                          n_trim = 2, ens_group = ens_group)
+  df_lop_hv <- hubEnsembles::linear_pool(df_hv, weights = weight.df_hv)
+
 })
 print("Time Ensemble LOP:")
 print(time_ens_lop)
@@ -238,3 +258,19 @@ arrow::write_dataset(df_unlop_tot,
                      basename_template = "Ensemble_LOP_untrimmed{i}.gz.parquet")
 
 print(paste0("TOTAL Process stop:", Sys.time()))
+
+print("Benchmark")
+
+smh_ensemble <- function(df) {
+  calculate_ensemble(df, ens_func, ens_group = ens_group,
+                     weight.df = weight.df)
+}
+hv_ensemble <- function(df) {
+  hubEnsembles::simple_ensemble(df, weight.df_hv,
+                                agg_fun = "median")
+}
+
+benchmark_ens <- rbenchmark::benchmark(100,
+                                       smh_ensemble(df),
+                                       hv_ensemble(df_hv))
+print(benchmark_ens)
