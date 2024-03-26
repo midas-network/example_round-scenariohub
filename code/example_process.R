@@ -102,12 +102,15 @@ lapply(list_team, function(x) {
       peak_group = peak_group, quantile_vect = quantile_vect)
 
     # Standardization
-    df_all <- dplyr::mutate(df_all, origin_date = as.Date(origin_date))
+    df_all <- dplyr::mutate(df_all, origin_date = as.Date(origin_date),
+                            value = ifelse(output_type == "sample",
+                                           round(value, 1), value))
 
     # Write and check output with 'SMHvalidation' package
     write_path <- paste0("output-processed/", x, "/")
     if (!dir.exists(write_path)) dir.create(write_path, recursive = TRUE)
     arrow::write_dataset(df_all, write_path,
+                         existing_data_behavior = "overwrite",
                          partitioning = c("origin_date", "target"),
                          hive_style = FALSE, compression = "gzip",
                          compression_level = 9,
