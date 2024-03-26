@@ -1,3 +1,4 @@
+rm(list = ls())
 library(arrow)
 library(magrittr)
 library(dplyr)
@@ -114,7 +115,7 @@ lapply(list_team, function(x) {
                                                     "{i}.gz.parquet"))
     SMHvalidation::validate_submission(
       write_path, js_def = "hub-config/tasks.json", lst_gs = NULL,
-      pop_path = "data-locations/locations.csv", merge_sample_col = TRUE,
+      pop_path = "data-locations/locations.csv", merge_sample_col = FALSE,
       partition = c("origin_date", "target"), n_decimal = 1)
   })
   print(x)

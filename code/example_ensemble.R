@@ -1,3 +1,4 @@
+rm(list = ls())
 print(paste0("TOTAL Process start:", Sys.time()))
 library(arrow)
 library(magrittr)
