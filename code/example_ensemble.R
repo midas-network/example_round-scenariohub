@@ -107,34 +107,41 @@ peak_group = c("origin_date", "scenario_id", "location", "target",
 all_target <- c("peak time hosp", "peak size hosp", "inc hosp", "cum hosp",
                 "inc death", "cum death")
 
-schema <- arrow::schema(
-  "origin_date" = arrow::string(),
-  "target" = arrow::string(),
-  "model_name" = arrow::string(),
-  "scenario_id" = arrow::string(),
-  "location" = arrow::string(),
-  "horizon" = arrow::int64(),
-  "age_group" = arrow::string(),
-  "output_type" = arrow::string(),
-  "output_type_id" = arrow::string(),
-  "value" = arrow::float(),
-  "run_grouping" = arrow::int64(),
-  "stochastic_run" = arrow::int64()
-)
+#schema <- arrow::schema(
+#  "origin_date" = arrow::string(),
+#  "target" = arrow::string(),
+#  "model_name" = arrow::string(),
+#  "scenario_id" = arrow::string(),
+#  "location" = arrow::string(),
+#  "horizon" = arrow::int64(),
+#  "age_group" = arrow::string(),
+#  "output_type" = arrow::string(),
+#  "output_type_id" = arrow::string(),
+#  "value" = arrow::float(),
+#  "run_grouping" = arrow::int64(),
+#  "stochastic_run" = arrow::int64()
+#)
+schema <- hubData::create_hub_schema(hubUtils::read_config(".", "tasks"))
+schema <- c(schema$fields,
+            arrow::Field$create("run_grouping", arrow::int64()),
+            arrow::Field$create("stochastic_run", arrow::int64()))
+schema <- arrow::schema(schema)
+
 source("code/utils.R")
 source("code/temp_calc_ens.R")
 
 # Calculate Ensemble ------
 message("# Quantile ensemble")
 print(paste0("Process quantile ensemble start:", Sys.time()))
-df <- arrow::open_dataset("output-processed/",
-                          partitioning = c("model_name", "origin_date",
-                                           "target"),
-                          factory_options = list(exclude_invalid_files = TRUE),
-                          schema = schema) %>%
+df <- hubData::connect_model_output("output-processed/",
+                                    partition_names = c("model_id",
+                                                        "origin_date", "target"), # "location"
+                                    file_format = "parquet",
+                                    schema = schema) %>%
   dplyr::filter(origin_date == "2024-04-28", output_type == "quantile") %>%
   dplyr::collect() %>%
-  dplyr::select(-run_grouping, -stochastic_run)
+  dplyr::select(-run_grouping, -stochastic_run, model_name = model_id) %>%
+  janitor::remove_empty(which = c("rows", "cols"))
 
 ens_func = function(x, y) {
   matrixStats::weightedMedian(x, w = y, na.rm = TRUE) }
@@ -173,7 +180,6 @@ time_ens_lop <- system.time({
                          weights = weight.df,
                          weighting_scheme = "cdf_exterior",
                          n_trim = 2, ens_group = ens_group)
-  df_lop_hv <- hubEnsembles::linear_pool(df_hv, weights = weight.df_hv)
 
 })
 print("Time Ensemble LOP:")

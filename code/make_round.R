@@ -163,6 +163,7 @@ lapply(config$rounds[7], function(x) {
     if (!dir.exists(folder_name)) dir.create(folder_name)
     arrow::write_dataset(df, folder_name,
                          partitioning = c("origin_date", "target"),
+                                          # "location"),
                          hive_style = FALSE, compression = "gzip",
                          compression_level = 9,
                          basename_template = paste0(model_id,
