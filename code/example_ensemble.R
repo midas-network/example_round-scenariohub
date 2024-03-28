@@ -203,8 +203,8 @@ df <- hubData::connect_model_output("output-processed/",
                                     schema = schema) %>%
   dplyr::filter(origin_date == "2024-04-28", grepl("peak", target)) %>%
   dplyr::collect() %>%
-  dplyr::select(-run_grouping, -stochastic_run, model_name = model_id) %>%
-  janitor::remove_empty(which = c("rows", "cols"))
+  dplyr::select(-run_grouping, -stochastic_run, model_name = model_id,
+                -race_ethnicity) %>%
 
 
 # Peak time
