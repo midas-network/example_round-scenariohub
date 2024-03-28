@@ -196,14 +196,16 @@ print(paste0("Process quantile ensemble stop:", Sys.time()))
 # Peak ensembe
 message("# Peak ensemble")
 print(paste0("Process peak ensemble start:", Sys.time()))
-df <- arrow::open_dataset("data-processed/",
-                          partitioning = c("model_name", "origin_date",
-                                           "target"),
-                          factory_options = list(exclude_invalid_files = TRUE),
-                          schema = schema) %>%
+df <- hubData::connect_model_output("output-processed/",
+                                    partition_names = c("model_id",
+                                                        "origin_date", "target"), # "location"
+                                    file_format = "parquet",
+                                    schema = schema) %>%
   dplyr::filter(origin_date == "2024-04-28", grepl("peak", target)) %>%
   dplyr::collect() %>%
-  dplyr::select(-run_grouping, -stochastic_run)
+  dplyr::select(-run_grouping, -stochastic_run, model_name = model_id) %>%
+  janitor::remove_empty(which = c("rows", "cols"))
+
 
 # Peak time
 df_time <- dplyr::filter(df, grepl("peak time", target)) %>%
@@ -267,6 +269,8 @@ arrow::write_dataset(df_unlop_tot,
 print(paste0("TOTAL Process stop:", Sys.time()))
 
 print("Benchmark")
+
+df <- dplyr::rename(df_hv, model_name = model_id)
 
 smh_ensemble <- function(df) {
   calculate_ensemble(df, ens_func, ens_group = ens_group,
