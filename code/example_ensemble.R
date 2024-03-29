@@ -193,7 +193,7 @@ print("Time Ensemble LOP untrimmed:")
 print(time_ens_lop_un)
 print(paste0("Process quantile ensemble stop:", Sys.time()))
 
-# Peak ensembe
+# Peak ensemble
 message("# Peak ensemble")
 print(paste0("Process peak ensemble start:", Sys.time()))
 df <- hubData::connect_model_output("output-processed/",
@@ -204,7 +204,7 @@ df <- hubData::connect_model_output("output-processed/",
   dplyr::filter(origin_date == "2024-04-28", grepl("peak", target)) %>%
   dplyr::collect() %>%
   dplyr::select(-run_grouping, -stochastic_run, model_name = model_id,
-                -race_ethnicity) %>%
+                -race_ethnicity)
 
 
 # Peak time
