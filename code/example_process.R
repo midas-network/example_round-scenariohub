@@ -119,7 +119,7 @@ lapply(list_team, function(x) {
     SMHvalidation::validate_submission(
       write_path, js_def = "hub-config/tasks.json", lst_gs = NULL,
       pop_path = "data-locations/locations.csv", merge_sample_col = FALSE,
-      partition = c("origin_date", "target"), n_decimal = 1)
+      partition = c("origin_date", "target", "location"), n_decimal = 1)
   })
   print(x)
   print(a_time)
