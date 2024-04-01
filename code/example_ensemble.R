@@ -90,12 +90,6 @@ list_quantiles <- c(0.01, 0.025, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4,
                     0.95, 0.975, 0.99)
 # vector of quantile value to integrate in the calculation of the ensemble
 
-group_column <- c("scenario_id", "target", "origin_date", "location",
-                  "model_name", "horizon")
-# group of column defining individual groups (for example, expect to have
-# one projection per scenario, target, horizon (target_end_date), location,
-# model and age group for the FLU projections)
-
 ens_group <- c("scenario_id", "target", "horizon", "origin_date", "location",
                "age_group")
 # group of column on which to calculate the ensemble (for example, aggregate
@@ -107,20 +101,6 @@ peak_group = c("origin_date", "scenario_id", "location", "target",
 all_target <- c("peak time hosp", "peak size hosp", "inc hosp", "cum hosp",
                 "inc death", "cum death")
 
-#schema <- arrow::schema(
-#  "origin_date" = arrow::string(),
-#  "target" = arrow::string(),
-#  "model_name" = arrow::string(),
-#  "scenario_id" = arrow::string(),
-#  "location" = arrow::string(),
-#  "horizon" = arrow::int64(),
-#  "age_group" = arrow::string(),
-#  "output_type" = arrow::string(),
-#  "output_type_id" = arrow::string(),
-#  "value" = arrow::float(),
-#  "run_grouping" = arrow::int64(),
-#  "stochastic_run" = arrow::int64()
-#)
 schema <- hubData::create_hub_schema(hubUtils::read_config(".", "tasks"))
 schema <- c(schema$fields,
             arrow::Field$create("run_grouping", arrow::int64()),
@@ -135,43 +115,28 @@ message("# Quantile ensemble")
 print(paste0("Process quantile ensemble start:", Sys.time()))
 df <- hubData::connect_model_output("output-processed/",
                                     partition_names = c("model_id",
-                                                        "origin_date", "target"), # "location"
+                                                        "origin_date", "target",
+                                                        "location"),
                                     file_format = "parquet",
                                     schema = schema) %>%
   dplyr::filter(origin_date == "2024-04-28", output_type == "quantile") %>%
   dplyr::collect() %>%
-  dplyr::select(-run_grouping, -stochastic_run, model_name = model_id) %>%
+  dplyr::select(-run_grouping, -stochastic_run) %>%
   janitor::remove_empty(which = c("rows", "cols"))
 
 ens_func = function(x, y) {
   matrixStats::weightedMedian(x, w = y, na.rm = TRUE) }
 
 weight.df = data.frame(
-  model_name = unique(df$model_name),
-  weight = 1)
-
-weight.df_hv = data.frame(
-  model_id = unique(df$model_name),
+  model_name = unique(df$model_id),
   weight = 1)
 
 df$output_type_id <- as.numeric(df$output_type_id)
+
 time_ens <- system.time({
-  ens <- calculate_ensemble(df, ens_func, ens_group = ens_group,
-                            weight.df = weight.df)
-  df_hv <- rename(df, model_id = model_name)
-  df_hv <- hubData::as_model_out_tbl(df_hv)
-  ens_hv <- hubEnsembles::simple_ensemble(df_hv, weight.df_hv,
-                                          agg_fun = "median")
-  div <- dplyr::setdiff(ens, dplyr::select(ens_hv, -model_id))
-  div2 <- dplyr::setdiff(dplyr::select(ens_hv, -model_id), ens)
-  if (nrow(div) > 0) {
-    warning("Difference between SMH and Hubverse process")
-    print(Head(div))
-  }
-  if (nrow(div) > 0) {
-    warning("Difference between Hubverse amd SMH process")
-    print(head(div2))
-  }
+  df_hv <- hubData::as_model_out_tbl(df)
+  ens <- hubEnsembles::simple_ensemble(df_hv, weight.df, agg_fun = "median")
+  ens <- dplyr::select(ens, -model_id)
 })
 print("Time Ensemble:")
 print(time_ens)
@@ -198,13 +163,13 @@ message("# Peak ensemble")
 print(paste0("Process peak ensemble start:", Sys.time()))
 df <- hubData::connect_model_output("output-processed/",
                                     partition_names = c("model_id",
-                                                        "origin_date", "target"), # "location"
+                                                        "origin_date", "target",
+                                                        "location"),
                                     file_format = "parquet",
                                     schema = schema) %>%
   dplyr::filter(origin_date == "2024-04-28", grepl("peak", target)) %>%
   dplyr::collect() %>%
-  dplyr::select(-run_grouping, -stochastic_run, model_name = model_id,
-                -race_ethnicity)
+  dplyr::select(-run_grouping, -stochastic_run, -race_ethnicity)
 
 
 # Peak time
@@ -239,49 +204,38 @@ df_unlop_peak <- peak_ensemble(df_peak, weighting_scheme = "user_defined",
 print(paste0("Process peak ensemble stop:", Sys.time()))
 
 # Write output
-if (!dir.exists("data-processed/Ensemble/"))
-  dir.create("data-processed/Ensemble/")
-arrow::write_dataset(ens, paste0("data-processed/Ensemble/"),
-                     partitioning = c("origin_date", "target"),
+if (!dir.exists("output-processed/Ensemble/"))
+  dir.create("output-processed/Ensemble/")
+print("Write Ensemble ...")
+print(head(ens))
+arrow::write_dataset(ens, paste0("output-processed/Ensemble/"),
+                     partitioning = c("origin_date", "target", "location"),
                      hive_style = FALSE, compression = "gzip",
                      compression_level = 9,
                      basename_template = "Ensemble{i}.gz.parquet")
 
 df_lop_tot <- rbind(df_lop, df_lop_peak)
-if (!dir.exists("data-processed/Ensemble_LOP/"))
-  dir.create("data-processed/Ensemble_LOP/")
-arrow::write_dataset(df_lop_tot, paste0("data-processed/Ensemble_LOP/"),
-                     partitioning = c("origin_date", "target"),
+if (!dir.exists("output-processed/Ensemble_LOP/"))
+  dir.create("output-processed/Ensemble_LOP/")
+print("Write Ensemble LOP ...")
+print(head(df_lop_tot))
+arrow::write_dataset(df_lop_tot, paste0("output-processed/Ensemble_LOP/"),
+                     partitioning = c("origin_date", "target", "location"),
                      hive_style = FALSE, compression = "gzip",
                      compression_level = 9,
                      basename_template = "Ensemble_LOP{i}.gz.parquet")
 
 df_unlop_tot <- rbind(df_unlop, df_unlop_peak)
-if (!dir.exists("data-processed/Ensemble_LOP_untrimmed/"))
-  dir.create("data-processed/Ensemble_LOP_untrimmed/")
+if (!dir.exists("output-processed/Ensemble_LOP_untrimmed/"))
+  dir.create("output-processed/Ensemble_LOP_untrimmed/")
+print("Write Ensemble LOP untrimmed ...")
+print(head(df_unlop_tot))
 arrow::write_dataset(df_unlop_tot,
-                     paste0("data-processed/Ensemble_LOP_untrimmed/"),
-                     partitioning = c("origin_date", "target"),
+                     paste0("output-processed/Ensemble_LOP_untrimmed/"),
+                     partitioning = c("origin_date", "target", "location"),
                      hive_style = FALSE, compression = "gzip",
                      compression_level = 9,
                      basename_template = "Ensemble_LOP_untrimmed{i}.gz.parquet")
 
 print(paste0("TOTAL Process stop:", Sys.time()))
-
-print("Benchmark")
-
-df <- dplyr::rename(df_hv, model_name = model_id)
-
-smh_ensemble <- function(df) {
-  calculate_ensemble(df, ens_func, ens_group = ens_group,
-                     weight.df = weight.df)
-}
-hv_ensemble <- function(df) {
-  hubEnsembles::simple_ensemble(df, weight.df_hv,
-                                agg_fun = "median")
-}
-
-benchmark_ens <- rbenchmark::benchmark(100,
-                                       smh_ensemble(df),
-                                       hv_ensemble(df_hv))
-print(benchmark_ens)
+rm(list = ls())

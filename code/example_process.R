@@ -111,7 +111,7 @@ lapply(list_team, function(x) {
     if (!dir.exists(write_path)) dir.create(write_path, recursive = TRUE)
     arrow::write_dataset(df_all, write_path,
                          existing_data_behavior = "overwrite",
-                         partitioning = c("origin_date", "target"),
+                         partitioning = c("origin_date", "target", "location"),
                          hive_style = FALSE, compression = "gzip",
                          compression_level = 9,
                          basename_template = paste0(x,
@@ -125,3 +125,4 @@ lapply(list_team, function(x) {
   print(a_time)
   NULL
 })
+rm(list = ls())
