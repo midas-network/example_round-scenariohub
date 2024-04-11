@@ -32,14 +32,14 @@ library(dplyr)
 #' @importFrom dplyr filter arrange mutate select
 #' @importFrom CombineDistributions aggregate_cdfs
 peak_ensemble <- function(df_peak, weighting_scheme, n_trim, weight.df,
-                          ens_group) {
+                          ens_group, id_var = "model_name") {
 
   df_peak_time <- dplyr::filter(df_peak, grepl("time", target)) %>%
     dplyr::arrange(target_end_date)
   df_peak_size <- dplyr::filter(df_peak, grepl("size", target))
   if (is.na(n_trim)) {
     df_lop_peak_time <- CombineDistributions::aggregate_cdfs(
-      df_peak_time, id_var = "model_name",
+      df_peak_time, id_var = id_var,
       group_by = ens_group, method = "LOP", weighting_scheme = weighting_scheme,
       weights = weight.df, ret_quantiles = NA, reorder_quantiles = FALSE,
       ret_values = unique(df_peak_time$target_end_date)) %>%
@@ -50,7 +50,7 @@ peak_ensemble <- function(df_peak, weighting_scheme, n_trim, weight.df,
                     horizon = NA) %>%
       dplyr::select(-quantile, -target_end_date)
     df_lop_peak_size <- CombineDistributions::aggregate_cdfs(
-      df_peak_size, id_var = "model_name",
+      df_peak_size, id_var = id_var,
       group_by = ens_group, method = "LOP", weighting_scheme = weighting_scheme,
       weights = weight.df, ret_quantiles = unique(df_peak_size$quantile),
       ret_values = NA)  %>%
@@ -60,7 +60,7 @@ peak_ensemble <- function(df_peak, weighting_scheme, n_trim, weight.df,
       dplyr::select(-quantile)
   } else {
     df_lop_peak_time <- CombineDistributions::aggregate_cdfs(
-      df_peak_time, id_var = "model_name",
+      df_peak_time, id_var = id_var,
       group_by = ens_group, method = "LOP", weighting_scheme = weighting_scheme,
       n_trim = n_trim, ret_quantiles = NA, reorder_quantiles = FALSE,
       ret_values = unique(df_peak_time$target_end_date)) %>%
@@ -71,7 +71,7 @@ peak_ensemble <- function(df_peak, weighting_scheme, n_trim, weight.df,
                     horizon = NA) %>%
       dplyr::select(-quantile, -target_end_date)
     df_lop_peak_size <- CombineDistributions::aggregate_cdfs(
-      df_peak_size, id_var = "model_name",
+      df_peak_size, id_var = id_var,
       group_by = ens_group, method = "LOP", weighting_scheme = weighting_scheme,
       n_trim = n_trim, ret_quantiles = unique(df_peak_size$quantile),
       ret_values = NA) %>%
@@ -128,7 +128,7 @@ ens_func = function(x, y) {
   matrixStats::weightedMedian(x, w = y, na.rm = TRUE) }
 
 weight.df = data.frame(
-  model_name = unique(df$model_id),
+  model_id = unique(df$model_id),
   weight = 1)
 
 df$output_type_id <- as.numeric(df$output_type_id)
@@ -144,7 +144,8 @@ time_ens_lop <- system.time({
   df_lop <- ensemble_lop(df, list_quantiles,
                          weights = weight.df,
                          weighting_scheme = "cdf_exterior",
-                         n_trim = 2, ens_group = ens_group)
+                         n_trim = 2, ens_group = ens_group,
+                         id_var = "model_id")
 
 })
 print("Time Ensemble LOP:")
@@ -152,7 +153,8 @@ print(time_ens_lop)
 time_ens_lop_un <- system.time({
   df_unlop <- ensemble_lop(df, list_quantiles, weights = weight.df,
                            weighting_scheme = "user_defined",
-                           n_trim = NA, ens_group = ens_group)
+                           n_trim = NA, ens_group = ens_group,
+                           id_var = "model_id")
 })
 print("Time Ensemble LOP untrimmed:")
 print(time_ens_lop_un)
@@ -196,10 +198,10 @@ df_size <- dplyr::filter(df, grepl("peak size", target),
 df_peak <- rbind(df_time, df_size)
 df_lop_peak <- peak_ensemble(df_peak, weighting_scheme =  "cdf_exterior",
                              n_trim = 2, weight.df = weight.df,
-                             ens_group = ens_group)
+                             ens_group = ens_group, id_var = "model_id")
 df_unlop_peak <- peak_ensemble(df_peak, weighting_scheme = "user_defined",
                                n_trim = NA, weight.df = weight.df,
-                               ens_group = ens_group)
+                               ens_group = ens_group, id_var = "model_id")
 
 print(paste0("Process peak ensemble stop:", Sys.time()))
 

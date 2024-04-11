@@ -319,18 +319,18 @@ calculate_ensemble <- function(df, ens_func, ens_group, weight.df) {
 #'
 #' @export
 ensemble_lop <- function(df, list_quantiles, weights, ens_group,
-                         weighting_scheme, n_trim) {
+                         weighting_scheme, n_trim, id_var = "model_name") {
   df <- dplyr::ungroup(df) %>%
     rename(quantile = output_type_id)
   # Calculate LOP
   if (is.na(n_trim)) {
     df_lop <- CombineDistributions::aggregate_cdfs(
-      df, id_var = "model_name", group_by = ens_group, method = "LOP",
+      df, id_var = id_var, group_by = ens_group, method = "LOP",
       ret_quantiles = list_quantiles, weights = weights, ret_values = NA,
       weighting_scheme = weighting_scheme)
   } else {
     df_lop <- CombineDistributions::aggregate_cdfs(
-      df, id_var = "model_name", group_by = ens_group, method = "LOP",
+      df, id_var = id_var, group_by = ens_group, method = "LOP",
       ret_quantiles = list_quantiles, weighting_scheme = weighting_scheme,
       n_trim = n_trim, ret_values = NA)
   }
