@@ -888,7 +888,7 @@
 			"start":"2023-11-14","end":"2023-12-14"}
 		},
 		{
-      "round_id": "2024-03-26",
+      "round_id": "2024-05-15",
       "round_id_from_variable": false,
       "model_tasks": [
         {
@@ -898,7 +898,7 @@
               "optional": null
             },
              "scenario_id": {
-              "required": ["A-2020-11-15"],
+              "required": ["A-2020-05-01"],
               "optional": null
             },
             "location": {
@@ -949,7 +949,7 @@
               "target_name": "Incident Infection",
               "target_units": "count",
               "target_keys": {
-                "target": "inc hosp"
+                "target": "inc inf"
               },
               "description": "Weekly new COVID-19 infection.",
               "target_type": "discrete",
@@ -961,7 +961,7 @@
               "target_name": "Incident cases",
               "target_units": "count",
               "target_keys": {
-                "target": "inc hosp"
+                "target": "inc case"
               },
               "description": "Weekly newly reported COVID-19 cases",
               "target_type": "discrete",
@@ -977,7 +977,7 @@
               "optional": null
             },
              "scenario_id": {
-              "required": ["A-2020-11-15"],
+              "required": ["A-2020-05-01"],
               "optional": null
             },
             "location": {
@@ -1028,7 +1028,7 @@
               "target_name": "Incident Infection",
               "target_units": "count",
               "target_keys": {
-                "target": "inc hosp"
+                "target": "inc inf"
               },
               "description": "Weekly new COVID-19 infection.",
               "target_type": "discrete",
@@ -1040,7 +1040,7 @@
               "target_name": "Incident cases",
               "target_units": "count",
               "target_keys": {
-                "target": "inc hosp"
+                "target": "inc case"
               },
               "description": "Weekly newly reported COVID-19 cases",
               "target_type": "discrete",
@@ -1056,7 +1056,7 @@
               "optional": null
             },
              "scenario_id": {
-              "required": ["A-2020-11-15"],
+              "required": ["A-2020-05-01"],
               "optional": null
             },
             "location": {
@@ -1106,7 +1106,7 @@
               "target_name": "Incident Infection",
               "target_units": "count",
               "target_keys": {
-                "target": "inc hosp"
+                "target": "inc inf"
               },
               "description": "Weekly new COVID-19 infection.",
               "target_type": "discrete",
@@ -1118,7 +1118,7 @@
               "target_name": "Incident cases",
               "target_units": "count",
               "target_keys": {
-                "target": "inc hosp"
+                "target": "inc case"
               },
               "description": "Weekly newly reported COVID-19 cases",
               "target_type": "discrete",
@@ -1134,7 +1134,7 @@
               "optional": null
             },
              "scenario_id": {
-              "required": ["A-2020-11-15"],
+              "required": ["A-2020-05-01"],
               "optional": null
             },
             "location": {
@@ -1184,7 +1184,7 @@
               "target_name": "Incident Infection",
               "target_units": "count",
               "target_keys": {
-                "target": "inc hosp"
+                "target": "inc inf"
               },
               "description": "Weekly new COVID-19 infection.",
               "target_type": "discrete",
@@ -1196,7 +1196,7 @@
               "target_name": "Incident cases",
               "target_units": "count",
               "target_keys": {
-                "target": "inc hosp"
+                "target": "inc case"
               },
               "description": "Weekly newly reported COVID-19 cases",
               "target_type": "discrete",
