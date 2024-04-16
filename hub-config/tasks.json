@@ -926,7 +926,7 @@
                 "samples_joint_across": ["horizon", "race_ethnicity"]
               },
               "value" : {
-                "type": "double",
+                "type": "numeric",
                 "minimum": 0
               }
             }
@@ -1005,7 +1005,7 @@
                 "samples_joint_across": ["horizon", "race_ethnicity"]
               },
               "value" : {
-                "type": "double",
+                "type": "numeric",
                 "minimum": 0
               }
             }
@@ -1083,7 +1083,7 @@
                 "optional": [0, 1]
               },
               "value" : {
-                "type": "double",
+                "type": "numeric",
                 "minimum": 0
               }
             }
@@ -1161,7 +1161,7 @@
                 "optional": [0, 1]
               },
               "value" : {
-                "type": "double",
+                "type": "numeric",
                 "minimum": 0
               }
             }
