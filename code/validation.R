@@ -73,12 +73,11 @@ if (length(pr_sub_files) > 0) {
     # Visualization
     df <- try({
       arrow::open_dataset(val_path, partitioning = partition) %>%
-        dplyr::filter(output_type == "quantile",
-                      origin_date == sub_file_date) %>%
+        dplyr::filter(output_type == "quantile") %>%
         dplyr::collect()
     })
-    print(head(df))
-    if (class(df) != "try-error" && nrow(df) > 0) {
+    # print(head(df))
+    if (all(class(df) != "try-error") && nrow(df) > 0) {
       test_viz <- try(generate_validation_plots(
         path_proj = val_path, lst_gs = NULL,
         save_path = paste0(getwd(), "/proj_plot"), y_sqrt = FALSE,
