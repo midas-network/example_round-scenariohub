@@ -8,6 +8,7 @@ pr_files <- gh::gh(paste0("GET /repos/",
                           Sys.getenv("GH_PR_NUMBER"), "/files"))
 
 pr_files_name <- purrr::map(pr_files, "filename")
+pr_files_name <- pr_files_name[!"removed" == purrr::map(pr_files, "status")]
 pr_sub_files <-
   stringr::str_extract(pr_files_name,
                        "data-processed/.+/\\d{4}-\\d{2}-\\d{2}(-.*)?")
