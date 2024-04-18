@@ -12,8 +12,8 @@ pr_files_name <- pr_files_name[!"removed" == purrr::map(pr_files, "status")]
 pr_sub_files <-
   stringr::str_extract(pr_files_name,
                        "data-processed/.+/\\d{4}-\\d{2}-\\d{2}(-.*)?")
-pr_sub_files <- unique(pr_sub_files)
-if (grepl(".pqt$|.parquet$", pr_sub_files)) {
+pr_sub_files <- unique(na.omit(pr_sub_files))
+if (any(grepl(".pqt$|.parquet$", pr_sub_files))) {
   partition = NULL
 } else {
   partition = c("origin_date", "target")
@@ -47,8 +47,12 @@ if (length(pr_sub_files) > 0) {
         url_link <- URLdecode(pr_sub_files_lst[[x]]$raw_url)
         download.file(url_link, basename(url_link))
       } else {
+        file_part <- paste0(getwd(), "/part_sub/",
+                            pr_sub_files_lst[[x]]$filename)
+        if (!(dir.exists(dirname(file_part))))
+          dir.create(dirname(file_part), recursive = TRUE)
         url_link <- pr_sub_files_lst[[x]]$raw_url
-        download.file(url_link, pr_sub_files_lst[[x]]$filename)
+        download.file(url_link, file_part)
       }
     })
     # run validation
@@ -59,12 +63,14 @@ if (length(pr_sub_files) > 0) {
     }
     if (is.null(partition)) {
       val_path <- basename(pr_sub_files_group)
+      round_id <- NULL
     } else {
-      val_path <- dirname(pr_sub_files_group)
+      val_path <- paste0(getwd(), "/part_sub/", dirname(pr_sub_files_group))
+      round_id <- sub_file_date
     }
     arg_list <- list(path = val_path, js_def = js_def_file, lst_gs = lst_gs,
                      pop_path = pop_path, merge_sample_col = merge_col,
-                     partition = partition)
+                     partition = partition, round_id = round_id)
     test <- capture.output(try(do.call(SMHvalidation::validate_submission,
                                        arg_list)))
     if (length(grep("Run validation on fil", test, invert = TRUE)) == 0) {
@@ -100,7 +106,7 @@ if (length(pr_sub_files) > 0) {
                              "validation was run.")))
 }
 
- # Post validation results as comment on the open PR
+# Post validation results as comment on the open PR
 test_valid <- purrr::map(test_tot, "valid")
 message <- purrr::map(test_valid, paste, collapse = "\n")
 
