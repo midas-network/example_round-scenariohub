@@ -59,6 +59,7 @@ if (length(pr_sub_files) > 0) {
         download.file(url_link, file_part)
       }
     })
+    gc()
     # run validation
     if (sub_file_date > "2024-01-01") {
       merge_col <- TRUE
@@ -77,9 +78,11 @@ if (length(pr_sub_files) > 0) {
                      partition = partition, round_id = round_id)
     test <- capture.output(try(do.call(SMHvalidation::validate_submission,
                                        arg_list)))
+    gc()
     if (length(grep("Run validation on fil", test, invert = TRUE)) == 0) {
       test <- try(do.call(SMHvalidation::validate_submission, arg_list))
       test <- test[1]
+      gc()
     }
     # Visualization
     df <- try({
@@ -87,6 +90,7 @@ if (length(pr_sub_files) > 0) {
         dplyr::filter(output_type == "quantile") %>%
         dplyr::collect()
     })
+    gc()
     # print(head(df))
     if (all(class(df) != "try-error") && nrow(df) > 0) {
       test_viz <- try(generate_validation_plots(
@@ -96,6 +100,7 @@ if (length(pr_sub_files) > 0) {
     } else {
       test_viz <- NA
     }
+    gc()
     if (class(test_viz) == "try-error")
       file.remove(dir(paste0(getwd(), "/proj_plot"), full.names = TRUE))
     # list of the viz and validation results
