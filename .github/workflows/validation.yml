@@ -2,7 +2,7 @@ name: Validate Submission(s)
 on:
   pull_request_target:
     paths:
-      - data-processed/**
+      - 'data-processed/**'
 jobs:
     validates-files:
         runs-on: ubuntu-20.04
