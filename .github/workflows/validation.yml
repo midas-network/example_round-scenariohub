@@ -3,10 +3,12 @@ on:
   pull_request_target:
     branches:
       - main
-
+      - equity
+    paths:
+      - data-processed/**
 jobs:
     validates-files:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-20.04
 
         steps:
         - name: Checkout repository
@@ -21,12 +23,12 @@ jobs:
           run: sudo apt-get install libcurl4-openssl-dev libudunits2-dev libgdal-dev
 
 
-        - name: Cache R packages 
+        - name: Cache R packages
           id: cache
-          if: runner.os != 'Windows' 
-          uses: actions/cache@v2 
-          with: 
-            path: ${{ env.R_LIBS_USER }} 
+          if: runner.os != 'Windows'
+          uses: actions/cache@v2
+          with:
+            path: ${{ env.R_LIBS_USER }}
             key: ${{ runner.os }}-${{ hashFiles('.github/requirements.txt') }}-1
 
         - name: Install dependencies
@@ -35,11 +37,11 @@ jobs:
             R -e 'Sys.setenv("NOT_CRAN" = TRUE)
                   install.packages(c("arrow", "gh", "remotes"))
                   Sys.unsetenv("NOT_CRAN")
-                  remotes::install_url("https://github.com/midas-network/SMHvalidation/archive/refs/heads/main.zip")
+                  remotes::install_url("https://github.com/midas-network/SMHvalidation/archive/refs/heads/version.zip")
                   remotes::install_url("https://github.com/Infectious-Disease-Modeling-Hubs/hubUtils/archive/refs/heads/main.zip")'
-          env: 
+          env:
             GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-            
+
         - name: Run Validation
           run: |
             Rscript code/validation.R
