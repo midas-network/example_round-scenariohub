@@ -1,9 +1,6 @@
 name: Validate Submission(s)
 on:
   pull_request_target:
-    branches:
-      - main
-      - equity
     paths:
       - data-processed/**
 jobs:
