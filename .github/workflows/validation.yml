@@ -5,7 +5,7 @@ on:
       - main
       - equity
     paths:
-      - data-processed/
+      - data-processed/**
 jobs:
     validates-files:
         runs-on: ubuntu-latest
