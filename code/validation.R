@@ -13,6 +13,7 @@ pr_sub_files <-
   stringr::str_extract(pr_files_name,
                        "data-processed/.+/\\d{4}-\\d{2}-\\d{2}(-.*)?")
 pr_sub_files <- unique(na.omit(pr_sub_files))
+pr_sub_files <- grep("(A|a)bstract", pr_sub_files, value = TRUE, invert = TRUE)
 if (any(grepl(".pqt$|.parquet$", pr_sub_files))) {
   partition = NULL
 } else {
@@ -40,6 +41,9 @@ if (length(pr_sub_files) > 0) {
 
     pr_sub_files_lst <- pr_files[grepl(pr_sub_files_group,
                                        purrr::map(pr_files, "filename"))]
+    pr_sub_files_lst <-
+      pr_sub_files_lst[!grepl("(A|a)bstract",
+                              purrr::map(pr_sub_files_lst, "filename"))]
     # run validation on all files
     test_tot <- lapply(seq_len(length(pr_sub_files_lst)), function(x) {
       # submission file download
