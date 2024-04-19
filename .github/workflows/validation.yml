@@ -17,7 +17,7 @@ jobs:
 
         - name: verify change in data-processed folder
           run: |
-            if [ -n "$( git show --pretty="" --name-only -- data-processed/)" ]; then
+            if [ -n "$( git show --pretty="" --name-only -- data-processed/  ${{GITHUB_SHA::6}})" ]; then
               echo "Commit includes change in the data-processed folder";
             else
                exit 1
