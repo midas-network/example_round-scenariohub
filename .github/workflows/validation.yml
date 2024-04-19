@@ -21,6 +21,7 @@ jobs:
               echo "Commit includes change in the data-processed folder";
             else
                echo "No change in the data-processed folder";
+               exit 1
             fi
 
         - name: Setup R
