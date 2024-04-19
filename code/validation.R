@@ -14,7 +14,7 @@ pr_sub_files <-
                        "data-processed/.+/\\d{4}-\\d{2}-\\d{2}(-.*)?")
 pr_sub_files <- unique(na.omit(pr_sub_files))
 pr_sub_files <- grep("(A|a)bstract", pr_sub_files, value = TRUE, invert = TRUE)
-if (any(grepl(".pqt$|.parquet$", pr_sub_files))) {
+if (all(grepl(".pqt$|.parquet$", pr_sub_files))) {
   partition = NULL
 } else {
   partition = c("origin_date", "target")
@@ -38,7 +38,6 @@ if (length(pr_sub_files) > 0) {
   test_tot <- lapply(group_files, function(y) {
     # select submission files
     pr_sub_files_group <- grep(y, pr_sub_files, value = TRUE)
-
     pr_sub_files_lst <- pr_files[grepl(pr_sub_files_group,
                                        purrr::map(pr_files, "filename"))]
     pr_sub_files_lst <-
