@@ -14,7 +14,7 @@ jobs:
             if [ -n "$( git show --pretty="" --name-only -- data-processed/)" ]; then
               echo "Commit includes change in the data-processed folder";
             else
-               ${{ cancelled() }}
+               exit 1
             fi
         
         - name: Checkout repository
