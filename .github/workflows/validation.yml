@@ -15,16 +15,9 @@ jobs:
           with:
             fetch-depth: 1
 
-        - name: Show GitHub context
-          env:
-            GITHUB_CONTEXT: ${{ toJson(github) }}
-          run: echo "$GITHUB_CONTEXT"
-
         - name: verify change in data-processed folder
           run: |
-            echo "${{ env.branch }}"
-            echo "${{ env.hash }}"
-            if [ -n "$( git show --pretty="" --name-only -- data-processed/" ]; then
+            if [ -n "$( git show --pretty="" --name-only -- data-processed/" ${{ github.sha }}]; then
               echo "Commit includes change in the data-processed folder";
               exit 1
             else
