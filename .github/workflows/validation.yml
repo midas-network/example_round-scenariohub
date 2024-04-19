@@ -45,7 +45,7 @@ jobs:
 
         - name: Run Validation
           run: |
-            check=$( ${{ github.event.pull_request.event.action }})
+            check=${{ github.event.pull_request.event.action }}
             echo $check
             Rscript code/validation.R
           env:
