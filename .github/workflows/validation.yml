@@ -19,8 +19,8 @@ jobs:
           run: |
             if [ -n "$( git show --pretty="" --name-only -- data-processed/" ${{ github.sha }}]; then
               echo "Commit includes change in the data-processed folder";
-              exit 1
             else
+               echo "No change in the data-processed folder"
                exit 1
             fi
 
