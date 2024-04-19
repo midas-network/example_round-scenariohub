@@ -3,14 +3,19 @@ library(gh)
 library(dplyr)
 
 # Check if validation need to run
-test <- gh::gh(paste0("GET /repos/",
-                      "midas-network/example_round-scenariohub/commits/",
-                      Sys.getenv("GH_COMMIT_SHA")))
-print(unique(unlist(purrr::map(test$files, "filename"))))
-check <- grepl("data-processed/", unique(unlist(purrr::map(test$files,
-                                                           "filename"))))
+if (length(Sys.getenv("GH_COMMIT_SHA")) > 1) {
+  test <- gh::gh(paste0("GET /repos/",
+                        "midas-network/example_round-scenariohub/commits/",
+                        Sys.getenv("GH_COMMIT_SHA")))
+  check <- grepl("data-processed/", unique(unlist(purrr::map(test$files,
+                                                             "filename"))))
+} else {
+  check <-  TRUE
+}
+
 if (isFALSE(all(check))) {
   test_tot <- NA
+  print("no update in data-processed folder")
 } else {
   # check if submissions file
   pr_files <- gh::gh(paste0("GET /repos/",
