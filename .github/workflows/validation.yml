@@ -43,10 +43,13 @@ jobs:
           env:
             GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
 
+        - name: test
+          run: |
+            check=${{ github.event.action }}
+            echo $check
+
         - name: Run Validation
           run: |
-            check=${{ github.event.pull_request.event.action }}
-            echo $check
             Rscript code/validation.R
           env:
             GH_PR_NUMBER: ${{ github.event.pull_request.number }}
