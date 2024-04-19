@@ -19,7 +19,9 @@ jobs:
         - name: verify change in data-processed folder
           id: change-check
           run: |
-            if [ -n "$( git show --pretty="" --name-only -- data-processed/ ${{ github.sha }})" ]; then
+            check=${git show --pretty="" --name-only -- data-processed/ ${{ github.sha }}}
+            echo $check
+            if [ $check -ge 1 ]; then
               echo "Commit includes change in the data-processed folder";
             else
                echo "No change in the data-processed folder";
