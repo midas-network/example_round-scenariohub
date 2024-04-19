@@ -1,7 +1,7 @@
-name: Validate Submission(s)
+name: Validate Submission
 on:
   pull_request_target:
-    types: [synchronize]
+    types: [synchronize, opened, reopened]
     branches:
       - main
     paths: 
@@ -43,15 +43,19 @@ jobs:
           env:
             GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
 
-        - name: test
-          run: |
-            check=${{ github.event.action }}
-            echo $check
-
         - name: Run Validation
+          if: ( github.event.action == 'synchronize' )
           run: |
             Rscript code/validation.R
           env:
             GH_PR_NUMBER: ${{ github.event.pull_request.number }}
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             GH_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
+
+        - name: Run Validation
+          if: ( github.event.action != 'synchronize' )
+          run: |
+            Rscript code/validation.R
+          env:
+            GH_PR_NUMBER: ${{ github.event.pull_request.number }}
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
