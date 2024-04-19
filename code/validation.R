@@ -9,7 +9,7 @@ test <- gh::gh(paste0("GET /repos/",
 print(unique(unlist(purrr::map(test$files, "filename"))))
 check <- grepl("data-processed/", unique(unlist(purrr::map(test$files,
                                                            "filename"))))
-if (isFALSE(check)) {
+if (isFALSE(all(check))) {
   test_tot <-
     list(list(valid = paste0("No projection submission file in the standard ",
                              "SMH file format found in the Pull-Request. No ",
