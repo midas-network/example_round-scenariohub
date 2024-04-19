@@ -3,13 +3,20 @@ on:
   pull_request_target:
     branches:
       - main
-    paths:
-      - 'data-processed/**.parquet'
+
 jobs:
     validates-files:
         runs-on: ubuntu-20.04
 
         steps:
+        - name: verify change in data-processed folder
+          run: |
+            if [ -n "$( git show --pretty="" --name-only -- data-processed/)" ]; then
+              echo "Commit includes change in the data-processed folder";
+            else
+               ${{ cancelled() }}
+            fi
+        
         - name: Checkout repository
           uses: actions/checkout@v3
           with:
