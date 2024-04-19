@@ -1,8 +1,10 @@
 name: Validate Submission(s)
 on:
   pull_request_target:
+    branches:
+      - main
     paths:
-      - 'data-processed/**'
+      - 'data-processed/**.parquet'
 jobs:
     validates-files:
         runs-on: ubuntu-20.04
