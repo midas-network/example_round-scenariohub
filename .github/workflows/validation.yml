@@ -1,7 +1,7 @@
 name: Validate Submission(s)
 on:
   pull_request_target:
-    types: [edited,  synchronize]
+    types: [synchronize]
     branches:
       - main
 
