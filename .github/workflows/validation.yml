@@ -9,6 +9,12 @@ jobs:
         runs-on: ubuntu-20.04
 
         steps:
+        
+        - name: Checkout repository
+          uses: actions/checkout@v3
+          with:
+            fetch-depth: 1
+
         - name: verify change in data-processed folder
           run: |
             if [ -n "$( git show --pretty="" --name-only -- data-processed/)" ]; then
@@ -16,11 +22,6 @@ jobs:
             else
                exit 1
             fi
-        
-        - name: Checkout repository
-          uses: actions/checkout@v3
-          with:
-            fetch-depth: 1
 
         - name: Setup R
           uses: r-lib/actions/setup-r@v2
