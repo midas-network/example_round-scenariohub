@@ -17,7 +17,10 @@ jobs:
 
         - name: verify change in data-processed folder
           run: |
-            if [ -n "$( git show --pretty="" --name-only -- data-processed/  ${{GITHUB_SHA::6}})" ]; then
+            echo "${{ env.branch }}"
+            echo "git_hash=$(git rev-parse --short "$GITHUB_SHA")" >> $GITHUB_HASH
+            echo "${{ env.hash }}"
+            if [ -n "$( git show --pretty="" --name-only -- data-processed/" ]; then
               echo "Commit includes change in the data-processed folder";
             else
                exit 1
