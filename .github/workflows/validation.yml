@@ -4,6 +4,8 @@ on:
     types: [synchronize]
     branches:
       - main
+    paths: 
+      - 'data-processed/**.parquet'
 
 jobs:
     validates-files:
