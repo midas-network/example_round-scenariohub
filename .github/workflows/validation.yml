@@ -33,7 +33,7 @@ jobs:
             key: ${{ runner.os }}-${{ hashFiles('.github/requirements.txt') }}-1
 
         - name: Install dependencies
-          if: ( steps.change-check.outputs.skipnext  != 'true' )
+          if: ( steps.cache.outputs.cache-hit != 'true' )
           run: |
             R -e 'Sys.setenv("NOT_CRAN" = TRUE)
                   install.packages(c("arrow", "gh", "remotes"))
