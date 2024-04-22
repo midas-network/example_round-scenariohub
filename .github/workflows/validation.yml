@@ -50,6 +50,7 @@ jobs:
           env:
             GH_PR_NUMBER: ${{ github.event.pull_request.number }}
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GH_COMMIT_SHA: ""
 
         - name: Run Validation - Synchronize
           if: ( github.event.action == 'synchronize' )
