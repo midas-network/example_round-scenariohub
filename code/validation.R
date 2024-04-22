@@ -3,8 +3,6 @@ library(gh)
 library(dplyr)
 
 # Check if validation need to run
-print(nchar(Sys.getenv("GH_COMMIT_SHA")))
-
 if (nchar(Sys.getenv("GH_COMMIT_SHA")) > 1) {
   test <- gh::gh(paste0("GET /repos/",
                         "midas-network/example_round-scenariohub/commits/",
@@ -174,8 +172,8 @@ if (!all(is.na(test_tot))) {
       message_plot <- capture.output(
         cat(message_plot, "\n\n\U000274c Error: ",
             "The visualization encounters an issue and might not be available,",
-            " if the validation does not return any error, please feel free to ",
-            "tag `@LucieContamin` for any question."))
+            " if the validation does not return any error, please feel free to",
+            " tag `@LucieContamin` for any question."))
     }
 
     gh::gh(paste0("POST /repos/", "midas-network/example_round-scenariohub/",

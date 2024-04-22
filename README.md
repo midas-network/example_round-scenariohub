@@ -2,5 +2,5 @@
 
 This repository is **in development**.
 
-This repository serves as an example of a scenario modeling hub round, 
+This repository serves to store example data for scenario modeling hub round, 
 modeled after the US Scenario Modeling Hub.
