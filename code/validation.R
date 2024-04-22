@@ -17,6 +17,11 @@ if (isFALSE(all(check))) {
   test_tot <- NA
   print("no update in data-processed folder")
 } else {
+  # Prerequisite
+  pop_path <- "data-locations/locations.csv"
+  js_def_file <- "hub-config/tasks.json"
+  lst_gs <- NULL
+
   # check if submissions file
   pr_files <- gh::gh(paste0("GET /repos/",
                             "midas-network/example_round-scenariohub/pulls/",
@@ -30,31 +35,40 @@ if (isFALSE(all(check))) {
   pr_sub_files <- unique(na.omit(pr_sub_files))
   pr_sub_files <- grep("(A|a)bstract", pr_sub_files, value = TRUE,
                        invert = TRUE)
-  if (all(grepl(".pqt$|.parquet$", pr_sub_files))) {
+  round_id <- unique(stringr::str_extract(pr_sub_files,
+                                          "\\d{4}-\\d{2}-\\d{2}"))
+  config_json <- jsonlite::read_json(js_def_file)
+  rounds_ids <- unique(hubUtils::get_round_ids(config_json))
+  sel_round <- grepl(paste(round_id, collapse = "|"), rounds_ids)
+  if (all(isFALSE(sel_round))) {
+    stop("The round id in the submission file was not recognized, please ",
+         "verify")
+  }
+  if (is.null(unlist(purrr::map(config_json$rounds[sel_round], "partition")))) {
     partition = NULL
   } else {
-    partition = c("origin_date", "target")
-  }
-  pop_path <- "data-locations/locations.csv"
-  js_def_file <- "hub-config/tasks.json"
-  lst_gs <- NULL
+    partition = unlist(purrr::map(config_json$rounds[sel_round], "partition"))
 
+  }
   # Run validation on file corresponding to the submission file format
   if (length(pr_sub_files) > 0) {
-    team_name <- unique(basename(dirname(pr_sub_files)))
-    sub_file_date <- unique(stringr::str_extract(basename(pr_sub_files),
-                                                 "\\d{4}-\\d{2}-\\d{2}"))
     if (!(dir.exists(paste0(getwd(), "/proj_plot"))))
       dir.create(paste0(getwd(), "/proj_plot"))
+    sub_file_date <- unique(stringr::str_extract(basename(pr_sub_files),
+                                                 "\\d{4}-\\d{2}-\\d{2}"))
     if (is.null(partition)) {
+      team_name <- unique(basename(dirname(pr_sub_files)))
       group_files <- paste0(sub_file_date, "-", team_name)
     } else {
       group_files <- sub_file_date
+      file_paths <- stringr::str_extract(pr_sub_files,
+                                         "(?<=data-processed/)(.+\\/)?")
+      team_name <- unique(unlist(purrr::map(strsplit(file_paths, "/"),1)))
     }
     test_tot <- lapply(group_files, function(y) {
       # select submission files
       pr_sub_files_group <- grep(y, pr_sub_files, value = TRUE)
-      pr_sub_files_lst <- pr_files[grepl(pr_sub_files_group,
+      pr_sub_files_lst <- pr_files[grepl(paste(pr_sub_files_group, collapse = "|"),
                                          purrr::map(pr_files, "filename"))]
       pr_sub_files_lst <-
         pr_sub_files_lst[!grepl("(A|a)bstract",
@@ -85,7 +99,7 @@ if (isFALSE(all(check))) {
         val_path <- basename(pr_sub_files_group)
         round_id <- NULL
       } else {
-        val_path <- paste0(getwd(), "/part_sub/", dirname(pr_sub_files_group))
+        val_path <- paste0(getwd(), "/part_sub/data-processed/", team_name, "/")
         round_id <- sub_file_date
       }
       arg_list <- list(path = val_path, js_def = js_def_file, lst_gs = lst_gs,
