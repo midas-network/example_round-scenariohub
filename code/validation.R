@@ -3,16 +3,15 @@ library(gh)
 library(dplyr)
 
 # Check if validation need to run
-print(length(Sys.getenv("GH_COMMIT_SHA")))
+print(nchar(Sys.getenv("GH_COMMIT_SHA")))
 
-if (length(Sys.getenv("GH_COMMIT_SHA")) > 1) {
+if (nchar(Sys.getenv("GH_COMMIT_SHA")) > 1) {
   test <- gh::gh(paste0("GET /repos/",
                         "midas-network/example_round-scenariohub/commits/",
                         Sys.getenv("GH_COMMIT_SHA")))
   check <- grepl("data-processed/", unique(unlist(purrr::map(test$files,
                                                              "filename"))))
 } else {
-  print(Sys.getenv("GH_COMMIT_SHA"))
   check <-  TRUE
 }
 
