@@ -77,16 +77,23 @@ make_peak <- function(df,
   df_time <- df %>%
     dplyr::filter(target == peak_target, output_type == "sample",
                   age_group == age_grp) %>%
-    dplyr::group_by(dplyr::pick(c(col_name_id, "output_type_id"))) %>%
-    dplyr::mutate(sel = ifelse(max(value) == value, horizon, NA)) %>%
-    dplyr::ungroup() %>%
-    dplyr::filter(!is.na(sel))
+    dplyr::group_by(dplyr::pick(c(grep("horizon", col_name_id,
+                                       value = TRUE, invert = TRUE),
+                                  "output_type_id"))) %>%
+    mutate(sel = ifelse(max(value) == value, horizon, NA)) %>%
+    filter(!is.na(sel)) %>%
+    arrange(horizon) %>%
+    mutate(sel3 = ifelse(duplicated(output_type_id), 0, 1)) %>%
+    filter(sel3 == 1) %>%
+    select(-contains("sel")) %>%
+    dplyr::ungroup()
   lst_time <- split(df_time, list(df_time$scenario_id, df_time$location,
-                                  df_time$age_group))
+                                  df_time$age_group, df_time$target))
   peak_time <- lapply(lst_time, function(dft) {
+    n_sample <- nrow(dft)
     df_epitime <- NULL
     for (i in 1:horizon_max) {
-      peak_prob <- nrow(dplyr::filter(dft, horizon == i)) / 100
+      peak_prob <- nrow(dplyr::filter(dft, horizon == i)) / n_sample
       if (!is.null(df_epitime)) {
         peak_cum <- dplyr::filter(df_epitime, horizon == i - 1) %>% .$value
         peak_cum <- peak_cum + peak_prob
@@ -100,7 +107,8 @@ make_peak <- function(df,
       } else {
         date <- paste0("EW", date$MMWRyear, date$MMWRweek)
       }
-      df_epi <- dplyr::distinct(dft[, col_name_id]) %>%
+      df_epi <- dplyr::distinct(dft[, grep("horizon", col_name_id,
+                                           value = TRUE, invert = TRUE)]) %>%
         dplyr::mutate(horizon = i, output_type = "cdf", output_type_id = date,
                       value = peak_cum,
                       target = gsub("inc ", "peak time ", peak_target))
@@ -110,12 +118,13 @@ make_peak <- function(df,
     return(df_epitime)
   }) %>%
     dplyr::bind_rows()
+  print(peak_time)
   tot_df <- rbind(df, df_size_quant, peak_time)
   return(tot_df)
 }
 
 # Prepare sample information for a specific column (col_update parameter)
-prep_sample_information <- function(df, col_update, pairing, rep = 100,
+prep_sample_information <- function(df, col_update, pairing, id_rep = 100,
                                     same_rep = FALSE) {
 
   df0 <- dplyr::filter(df, output_type != "sample")
@@ -135,14 +144,14 @@ prep_sample_information <- function(df, col_update, pairing, rep = 100,
     # Create an Index: repeat `rep` number of times the unique
     # pairing values and assign an index to each time
     all_index <- data.frame()
-    n <- rep * x - rep
+    n <- id_rep * x - id_rep
     if (isFALSE(same_rep)) {
-      for (n in seq(n + 1, rep * x, 1)) {
+      for (n in seq(n + 1, id_rep * x, 1)) {
         index[[col_update]] <- n
         all_index <- rbind(all_index, index)
       }
     } else {
-      all_index <- index[rep(seq_len(nrow(index)), rep), , FALSE]
+      all_index <- index[rep(seq_len(nrow(index)), id_rep), , FALSE]
       all_index[[col_update]] <- n
     }
     # Arrange both the index and original data by pairing variables

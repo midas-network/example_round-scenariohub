@@ -16,17 +16,21 @@ hubAdmin::view_config_val_errors(a)
 
 ## EQUITY ROUNDS ------------
 ## Phase II
-lapply(config$rounds[8], function(x) {
-  req_df <- lapply(c(1:2), function(i) {
-    req_df <- make_df_sample(x$model_tasks[i],
-                             max_sample =  max_sample(x))
-  }) %>% dplyr::bind_rows()
+lapply(config$rounds[6], function(x) {
+  req_df <- make_df_sample(x$model_tasks,
+                           max_sample =  max_sample(x))
   default_pairing <- def_grp(x)
   max_sample <- max_sample(x)
   lapply(unique(req_df$team_model), function(model_id) {
     print(paste0("Generate example data for: ", model_id))
     df <- dplyr::filter(req_df, team_model == model_id)
     df <- dplyr::select(df, -team_model)
+    if (model_id %in% c("team1-modela", "team2-modelb")) {
+      df2 <- dplyr::filter(df, target == "inc death")
+      df2$target <- "inc case"
+      df <- rbind(df, df2)
+      rm(df2)
+    }
     print("-- Generate value")
     if (!model_id %in% c("team1-modela", "team2-modelb")) {
       df <- update_df_val_sample(df)
@@ -34,13 +38,13 @@ lapply(config$rounds[8], function(x) {
       df <- update_df_val_sample(df, quantile = TRUE,
                                  quant_group = c("origin_date", "scenario_id",
                                                  "location", "target", "horizon",
-                                                 "age_group"),
+                                                 "race_ethnicity"),
                                  cumul_group = c("origin_date",  "scenario_id",
                                                  "location", "target",
                                                  "output_type",
                                                  "output_type_id",
-                                                 "age_group"),
-                                 peak = TRUE)
+                                                 "race_ethnicity"))
+      df <- dplyr::filter(df, grepl("inc", target))
     }
     print("-- Generate sample ID")
     df <- dplyr::mutate(df, value = round(value, 1),
@@ -50,32 +54,32 @@ lapply(config$rounds[8], function(x) {
                                                 output_type_id))
     if (model_id %in% c("team1-modela")) {
       df <- prep_sample_information(df, "stochastic_run", default_pairing,
-                                    id_rep = max_sample)
+                                    rep = max_sample)
     } else if (model_id %in% c("team2-modelb")) {
       df <- prep_sample_information(df, "run_grouping", default_pairing,
-                                    id_rep = max_sample)
+                                    rep = max_sample)
     } else if (model_id %in% c("team3-modelc")) {
       df <-
         prep_sample_information(df, "run_grouping", default_pairing,
-                                id_rep = max_sample) %>%
+                                rep = max_sample) %>%
         prep_sample_information("stochastic_run", default_pairing,
-                                id_rep = max_sample)
+                                rep = max_sample)
     } else if (model_id %in% c("team4-modeld")) {
       df <-
         prep_sample_information(df, "run_grouping", default_pairing,
-                                id_rep = max_sample,  same_rep = TRUE) %>%
+                                rep = max_sample,  same_rep = TRUE) %>%
         prep_sample_information("stochastic_run", default_pairing,
-                                id_rep = max_sample)
+                                rep = max_sample)
     } else {
       df <-
         prep_sample_information(df, "run_grouping", c(default_pairing,
                                                       "scenario_id"),
-                                id_rep = max_sample,  same_rep = TRUE) %>%
+                                rep = max_sample,  same_rep = TRUE) %>%
         prep_sample_information("stochastic_run", default_pairing,
-                                id_rep = max_sample)
+                                rep = max_sample)
     }
     print("-- Write output")
-    file_name <-  paste0("data-processed/", model_id, "/", "2024-08-11", "-",
+    file_name <-  paste0("data-processed/", model_id, "/", x$round_id, "-",
                          model_id, ".gz.parquet")
     if (model_id %in% c("team1-modela")) {
       df$value <- as.integer(df$value)
