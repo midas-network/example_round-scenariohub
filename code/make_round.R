@@ -16,7 +16,7 @@ hubAdmin::view_config_val_errors(a)
 
 ## EQUITY ROUNDS ------------
 ## Phase II
-lapply(config$rounds[8], function(x) {
+lapply(config$rounds[9], function(x) {
   req_df <- lapply(c(1:2), function(i) {
     req_df <- make_df_sample(x$model_tasks[i],
                              max_sample =  max_sample(x))
@@ -69,13 +69,13 @@ lapply(config$rounds[8], function(x) {
     } else {
       df <-
         prep_sample_information(df, "run_grouping", c(default_pairing,
-                                                      "scenario_id"),
+                                                      "location"),
                                 id_rep = max_sample,  same_rep = TRUE) %>%
         prep_sample_information("stochastic_run", default_pairing,
                                 id_rep = max_sample)
     }
     print("-- Write output")
-    file_name <-  paste0("data-processed/", model_id, "/", "2024-08-11", "-",
+    file_name <-  paste0("data-processed/", model_id, "/", "2024-07-28", "-",
                          model_id, ".gz.parquet")
     if (model_id %in% c("team1-modela")) {
       df$value <- as.integer(df$value)
