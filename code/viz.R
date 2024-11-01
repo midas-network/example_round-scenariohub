@@ -16,9 +16,11 @@ schema <- arrow::schema(schema)
 # partition <- "model_id"
 partition <- c("model_id", "origin_date", "target")
 
-data <- arrow::open_dataset("data-processed/", partitioning = partition,
-                            schema = schema) %>%
-  dplyr::filter(origin_date == "2024-04-28")#, grepl("2020-05-01", scenario_id))
+data <-
+  arrow::open_dataset("data-processed/", partitioning = partition,
+                      schema = schema,
+                      factory_options = list(exclude_invalid_files = TRUE)) %>%
+  dplyr::filter(origin_date == "2024-07-28")#"2024-04-28")#, grepl("2020-05-01", scenario_id))
 
 # Sample -----
 test <- dplyr::filter(data, output_type == "sample") %>%
