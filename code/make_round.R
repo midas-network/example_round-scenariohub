@@ -14,7 +14,7 @@ config <- hubUtils::read_config(getwd(), config = "tasks")
 a <- hubAdmin::validate_config()
 hubAdmin::view_config_val_errors(a)
 
-## EQUITY ROUNDS ------------
+## Heterogeneity ROUNDS ------------
 ## Phase II
 lapply(config$rounds[9], function(x) {
   req_df <- lapply(c(1:2), function(i) {
